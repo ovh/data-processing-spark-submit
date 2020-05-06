@@ -294,3 +294,6 @@ dmypy.json
 
 ### Scala ###
 *.metals
+
+### ovh ###
+ovh.conf

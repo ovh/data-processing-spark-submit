@@ -1,0 +1,39 @@
+run:
+  tests: false
+  timeout: 5m
+output:
+  format: colored-line-number
+  print-issued-lines: true
+  print-linter-name: true
+linters:
+  disable-all: true
+  enable:
+    - varcheck
+    - staticcheck
+    - ineffassign
+    - govet
+    - gosimple
+    - errcheck
+    - deadcode
+    - gofmt
+    - goimports
+    - unconvert
+    - misspell
+    - bodyclose
+    - depguard
+    - dupl
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - golint
+    - interfacer
+    - maligned
+    - misspell
+    - nakedret
+    - prealloc
+    - scopelint
+    - stylecheck
+    - unconvert
+    - unused
