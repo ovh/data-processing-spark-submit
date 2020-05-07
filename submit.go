@@ -4,8 +4,11 @@ import (
 	"fmt"
 	"log"
 	"net/url"
+	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/Pallinder/go-randomdata"
@@ -42,6 +45,7 @@ type (
 	Client struct {
 		OVH          *ovh.Client
 		lastPrintLog uint64
+		JobID        string
 	}
 )
 
@@ -60,6 +64,7 @@ func main() {
 	}
 
 	job := client.Submit(args.ProjectID, jobSubmitValue)
+	SetupCloseHandler(client)
 	//poll Status
 statusLoop:
 	for {
@@ -85,6 +90,20 @@ statusLoop:
 	if logs.LogsAddress != "" {
 		log.Printf("You can download your logs at %s", logs.LogsAddress)
 	}
+}
+
+// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
+// program if it receives an interrupt from the OS. We then handle this by calling
+// our clean up procedure and exiting the program.
+func SetupCloseHandler(client *Client) {
+	c := make(chan os.Signal)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	go func() {
+		<-c
+		client.Kill(args.ProjectID, client.JobID)
+		log.Printf("Job is killed")
+		os.Exit(0)
+	}()
 }
 
 //ParsArgs Parse args and return a JobSubmit
@@ -250,12 +269,23 @@ func (c *Client) PrintLog(projectID string, jobID string) {
 
 // Submit job to the API
 func (c *Client) Submit(projectID string, params *JobSubmit) *JobStatus {
+	log.Printf("Submitting job %s ...", params.Name)
 	job := &JobStatus{}
 
 	path := fmt.Sprintf(DataProcessingSubmit, url.QueryEscape(projectID))
 	if err := c.OVH.Post(path, params, job); err != nil {
 		log.Fatalf("Unable to submit job: %s", err)
 	}
+	c.JobID = job.ID
 	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
 	return job
+}
+
+// Kill job
+func (c *Client) Kill(projectID string, jobID string) {
+
+	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
+	if err := c.OVH.Delete(path, nil); err != nil {
+		log.Fatalf("Unable to kill job: %s", err)
+	}
 }

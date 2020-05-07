@@ -1,0 +1,21 @@
+language: go
+go:
+- 1.14.x
+before_install:
+- make init
+script:
+- make format
+- make lint
+- make test
+- make cover
+- make dist
+deploy:
+  provider: releases
+  api_key:
+    secure: kmi/TowbZe7Q/snw2c4bKsYF7o/LtJdUyR6LiDvPII+MMboMXX0Y/1nzTf9pk2EcoXtlSjdskH/ZPz+1bIEfs1Xn5pV6aV66SmDPvDz7P5/Zn11/AOrwE0gXqfRlkuED0PsFmUVQ4wkdSjBVNveAhIddRYunOCW38iFjLOvQTWgTKTZ2DRYYdTf+f8+Z2UUmFPHwjP9TLV1R8Fz1P/vydozuZOA/RSvR3UMnS+8NYrB97YPCRQJGCeUMrMK+jT4o95D3DfEN5WiZzluxFdjxy3IJn/bGNcYhoTk9J2vKwkS43/tmIyT4squG6oRIjYyXp+tRgbRppRjlzFmAXEh3KPvm0z8mtAdKrMejVbO3G5zM6zDwvktzwgzXQ+3hOADNK7IWJev2xqsB9TPqeg8+66Ko8OFwCEPQlcDFn2T8KA6Vd4+D/w0ATuUPoHznTRN7qrrCF9NHVFxgGOAGeyVCMaexlgm4jmiaIe5tCzuirz/t8ndG0GmT+ow3eEwTQ4N9DWVHi7rraSeMJKJGWFHixhAC2pTklAafITxBFZRBRmONJiF4Kq1SjPc7dV5iXHBPwRC99/9rMQXjtWJwDlsCcUmHXgfxKlKjsiWhvM6kBxgAT76RyN+VDgM0BBDIgnO9QwcGIXCJx6eA57e4jV+96NnDcPQVgTku0q57gECCRZA=
+  file: build/*
+  skip_cleanup: true
+  on:
+    repo: ovh/data-processing-spark-submit
+    branch: master
+    tags: true

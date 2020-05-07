@@ -1,4 +1,8 @@
 # OVHcloud Data Processing Spark-submit
+
+[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/ovh/data-processing)
+[![travis](https://travis-ci.org/ovh/data-processing-spark-submit.svg?branch=master)](https://travis-ci.org/ovh/data-processing-spark-submit)
+
 With OVHcloud Data Processing, you can run your processing job over the cloud, in a fast, easy and cost-efficient way. 
 Everything is managed and secured by OVHcloud and you just need to define how much resources you would like. 
 You can learn more about OVHcloud Data Processing [here](https://docs.ovh.com/gb/en/data-processing/overview/).
@@ -73,4 +77,3 @@ Options:
 OS_PROJECT_ID=1377b21260f05b410e4652445ac7c95b  ./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 4G --num-executors 1 s3://odp/spark-examples.jar 1000
 ```
 
-> :warning: **A CTRL+ C will not kill the Job**

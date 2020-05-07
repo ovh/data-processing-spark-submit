@@ -66,20 +66,20 @@ dev: format lint build
 
 .PHONY: build
 build:
-	$(CC) $(DFLAGS) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/spark-submit
+	$(CC) $(DFLAGS) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/ovh-spark-submit
 
 .PHONY: release
 release:
-	$(CC) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/spark-submit
+	$(CC) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/ovh-spark-submit
 
 .PHONY: dist
 dist:
 		@for GOOS in $(PLATFORMS) ; do \
             for GOARCH in $(ARCHITECTURES) ; do \
-                GOOS=$${GOOS} GOARCH=$${GOARCH} $(CC) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/$${GOOS}/$${GOARCH}/spark-submit; \
+                GOOS=$${GOOS} GOARCH=$${GOARCH} $(CC) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/$${GOOS}/$${GOARCH}/ovh-spark-submit; \
 			done \
 		done
 
 .PHONY: install
 install: release
-	cp -v $(BUILD_DIR)/spark-submit $(GOPATH)/bin/spark-submit
+	cp -v $(BUILD_DIR)/ovh-spark-submit $(GOPATH)/bin/ovh-spark-submit
