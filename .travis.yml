@@ -1,0 +1,18 @@
+language: go
+
+go:
+  - 1.14.x
+
+before_install:
+  - make init
+
+script:
+  - make format
+  - make lint
+  - make release
+  - make test
+  - make cover
+
+after_success:
+- bash <(curl -s https://codecov.io/bash)
+
