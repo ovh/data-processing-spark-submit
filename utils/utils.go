@@ -2,11 +2,15 @@ package utils
 
 import (
 	"os"
+	"path/filepath"
 
 	"github.com/dustin/go-humanize"
+	"github.com/gabriel-vasile/mimetype"
 )
 
 const MinimalOverhead = 384
+const MimeTypePython = "application/x-python"
+const MimeTypeTextPlain = "text/plain"
 
 // DeductMemoryOverhead Calculate Memory Overhead
 // if calculated must > MinimalOverhead
@@ -41,4 +45,18 @@ func CleanArgs() {
 		}
 	}
 	os.Args = r
+}
+
+//DetectMimeType detect MimeType of file
+func DetectMimeType(filePath string) string {
+	mime, err := mimetype.DetectFile(filePath)
+	if err != nil {
+		return ""
+	}
+
+	if filepath.Ext(filePath) == ".py" && mime.Is(MimeTypeTextPlain) {
+		return MimeTypePython
+	}
+
+	return mime.String()
 }

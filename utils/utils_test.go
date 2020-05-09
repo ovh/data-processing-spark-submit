@@ -107,3 +107,31 @@ func TestCleanArgsWithSpace(t *testing.T) {
 	}
 
 }
+
+func TestDetectMimeTypePython1(t *testing.T) {
+
+	if DetectMimeType("../testdata/py.py") != MimeTypePython {
+		t.Fail()
+	}
+}
+
+func TestDetectMimeTypePython2(t *testing.T) {
+
+	if DetectMimeType("../testdata/py2.py") != MimeTypePython {
+		t.Fail()
+	}
+}
+
+func TestDetectMimeTypeJava(t *testing.T) {
+
+	if DetectMimeType("../testdata/jar.jar") != "application/jar" {
+		t.Fail()
+	}
+}
+
+func TestDetectMimeTypeError(t *testing.T) {
+
+	if DetectMimeType("../testdata/jar.ja") != "" {
+		t.Fail()
+	}
+}

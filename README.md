@@ -11,31 +11,33 @@ In this repository you will find a spark-submit wrapper to run spark job on OVHc
 
 ## Configuration
 
-First Create an OVH token by visiting  https://eu.api.ovh.com/createToken/
+Create an OVHCloud token by visiting  https://eu.api.ovh.com/createToken/
 and add right GET/POST/PUT on endpoint /cloud/project/\*/dataProcessing/\*
 
-Then create the configuration file like below :
+If you want to use the auto upload you need set storage's parameters too.
+
+Supported storage protocol :
+ - swift (OVHcloud Object Storage with Keystone v3 authentication)
+
+Then create the configuration file ``configuration.ini`` in the same directory as below :
 
 ```ini
-[default]
-; general configuration: default endpoint
-endpoint=ovh-eu
-
-[ovh-eu]
+[ovh]
 ; configuration specific to 'ovh-eu' endpoint
+endpoint=ovh-eu
 application_key=my_app_key
 application_secret=my_application_secret
 consumer_key=my_consumer_key
+
+; configuration specific for protocol swift (OVHcloud Object Storage with Keystone v3 authentication)
+[swift]
+user_name=openstack_user_name
+password=openstack_password
+auth_url=openstack_auth_url
+domain=openstack_auth_url_domain
+region=openstack_region
+
 ```
-
-The client will successively attempt to locate this configuration file in:
-
-1. Current working directory: ``./ovh.conf``
-2. Current user's home directory ``~/.ovh.conf``
-3. System wide configuration ``/etc/ovh.conf``
-
-
-
 
 ## Build
 ```
@@ -45,18 +47,19 @@ make release
 
 ## Run
 ```
-ovh-spark-submit [--jobname JOBNAME] [--region REGION] --projectid PROJECTID [--version VERSION] [--class CLASS] --driver-cores DRIVER-CORES --driver-memory DRIVER-MEMORY [--driver-memoryOverhead DRIVER-MEMORYOVERHEAD] --executor-cores EXECUTOR-CORES --num-executors NUM-EXECUTORS --executor-memory EXECUTOR-MEMORY [--executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD] FILE [PARAMETERS [PARAMETERS ...]]
+ovh-spark-submit [--jobname JOBNAME] [--region REGION] --projectid PROJECTID [--version VERSION] [--upload UPLOAD] [--class CLASS] --driver-cores DRIVER-CORES --driver-memory DRIVER-MEMORY [--driver-memoryOverhead DRIVER-MEMORYOVERHEAD] --executor-cores EXECUTOR-CORES --num-executors NUM-EXECUTORS --executor-memory EXECUTOR-MEMORY [--executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD] FILE [PARAMETERS [PARAMETERS ...]]
                  
 Positional arguments:
    FILE
    PARAMETERS
  
 Options:
-   --jobname JOBNAME      Job name (can be set with ENV VARS JOB_NAME)
-   --region REGION        Openstack region of the job (can be set with ENV VARS OS_REGION) [default: GRA]
+   --jobname JOBNAME      Job name (can be set with ENV vars JOB_NAME)
+   --region REGION        Openstack region of the job (can be set with ENV vars OS_REGION) [default: GRA]
    --projectid PROJECTID
-                          Openstack ProjectID (can be set with ENV VARS OS_PROJECT_ID)
-   --version VERSION      Version of spark (can be set with ENV VARS SPARK_VERSION) [default: 2.4.3]
+                          Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)
+   --version VERSION      Version of spark (can be set with ENV vars SPARK_VERSION) [default: 2.4.3]
+   --upload UPLOAD        file path/dir to upload before running the job (can be set with ENV vars UPLOAD)
    --class CLASS          main-class
    --driver-cores DRIVER-CORES
    --driver-memory DRIVER-MEMORY
@@ -70,10 +73,19 @@ Options:
    --executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD
                           Executor memory in (gigi/mebi)bytes (eg. "10G")
    --help, -h             display this help and exit
+                 
+
 ```
 
 ### Example
+
+Without Auto Upload:
 ```
-OS_PROJECT_ID=1377b21260f05b410e4652445ac7c95b  ./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 4G --num-executors 1 s3://odp/spark-examples.jar 1000
+OS_PROJECT_ID=1377b21260f05b410e4652445ac7c95b  ./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 4G --num-executors 1 swift://odp/spark-examples.jar 1000
 ```
 
+With Auto Upload
+
+```
+OS_PROJECT_ID=1377b21260f05b410e4652445ac7c95b  ./ovh-spark-submit --upload ./spark-examples.jar --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 4G --num-executors 1 swift://odp/spark-examples.jar 1000
+```
