@@ -76,7 +76,7 @@ release:
 dist:
 		@for GOOS in $(PLATFORMS) ; do \
             for GOARCH in $(ARCHITECTURES) ; do \
-                GOOS=$${GOOS} GOARCH=$${GOARCH} $(CC) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/$${GOOS}/$${GOARCH}/ovh-spark-submit; \
+                GOOS=$${GOOS} GOARCH=$${GOARCH} $(CC) -ldflags "-s -w $(CFLAGS)" -o $(BUILD_DIR)/ovh-spark-submit_$${GOOS}_$${GOARCH}; \
 			done \
 		done
 
