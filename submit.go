@@ -3,31 +3,34 @@ package main
 import (
 	"fmt"
 	"log"
-	"net/url"
 	"os"
 	"os/signal"
 	"path/filepath"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
+
+	"data-processing-spark-submit/upload"
+	"data-processing-spark-submit/utils"
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/alexflint/go-arg"
 	"github.com/ovh/go-ovh/ovh"
-
-	"data-processing-spark-submit/utils"
+	"gopkg.in/ini.v1"
 )
 
 const (
-	LoopWaitSecond = 5
+	LoopWaitSecond = 2
 )
 
 var (
 	args struct {
-		JobName                string   `arg:"env:JOB_NAME" help:"Job name (can be set with ENV VARS JOB_NAME)"`
-		Region                 string   `arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV VARS OS_REGION)"`
-		ProjectID              string   `arg:"env:OS_PROJECT_ID,required" help:"Openstack ProjectID (can be set with ENV VARS OS_PROJECT_ID)"`
-		Version                string   `arg:"env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV VARS SPARK_VERSION)"`
+		JobName                string   `arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
+		Region                 string   `arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
+		ProjectID              string   `arg:"env:OS_PROJECT_ID,required" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
+		Version                string   `arg:"env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
+		Upload                 string   `arg:"env:UPLOAD" help:"file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
 		Class                  string   `help:"main-class"`
 		DriverCores            string   `arg:"--driver-cores,required"`
 		DriverMemory           string   `arg:"--driver-memory,required" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
@@ -41,69 +44,99 @@ var (
 	}
 )
 
+var (
+	configPath = "configuration.ini"
+)
+
 type (
-	Client struct {
-		OVH          *ovh.Client
-		lastPrintLog uint64
-		JobID        string
+	OVHConf struct {
+		Endpoint          string `ini:"endpoint"`
+		ApplicationKey    string `ini:"application_key"`
+		ApplicationSecret string `ini:"application_secret"`
+		ConsumerKey       string `ini:"consumer_key"`
 	}
 )
 
 // main ovh-spark-submit entry point
 func main() {
+	var err error
 
 	jobSubmitValue := ParsArgs()
 
-	var err error
-	ovh, err := ovh.NewDefaultClient()
+	conf, err := InitConf(configPath)
 	if err != nil {
-		log.Fatalf("Error while creating OVH Client: %s\nYou need to create an application; please visite this page https://api.ovh.com/createApp/ and create your ovh.conf file\n\t[default]\n\t; general configuration: default endpoint\n\tendpoint=ovh-eu\n\n\t[ovh-eu]\n\t; configuration specific to 'ovh-eu' endpoint\n\tapplication_key=my_app_key", err)
-	}
-	client := &Client{
-		OVH: ovh,
+		log.Fatalf("Unable to load conf: %s", err)
 	}
 
-	job := client.Submit(args.ProjectID, jobSubmitValue)
-	SetupCloseHandler(client)
-	//poll Status
-statusLoop:
-	for {
-		switch job.Status {
-		case JobStatusUNKNOWN, JobStatusSUBMITTED, JobStatusPENDING:
-			log.Printf("Job is %s", job.Status)
+	ovhConf := new(OVHConf)
+	if err := conf["ovh"].MapTo(ovhConf); err != nil {
+		log.Fatalf("Unable to parse \"ovh\" conf: %s", err)
+	}
 
-		case JobStatusCANCELLING, JobStatusTERMINATED, JobStatusFAILED, JobStatusCOMPLETED:
-			break statusLoop
+	ovhClient, err := ovh.NewClient(
+		ovhConf.Endpoint,
+		ovhConf.ApplicationKey,
+		ovhConf.ApplicationSecret,
+		ovhConf.ConsumerKey,
+	)
+	if err != nil {
+		log.Fatalf("Error while creating OVH Client: %s", err)
+	}
 
-		case JobStatusRUNNING:
-			client.PrintLog(args.ProjectID, job.ID)
+	if args.Upload != "" {
+		args.File = filepath.Clean(args.File)
+		splitFile := strings.Split(args.File, "/")
+		protocol := strings.TrimSuffix(splitFile[0], ":")
+		storage, err := upload.New(conf[protocol], protocol)
+		if err != nil {
+			log.Fatalf("Error while Initialise Upload Storage: %s", err)
 		}
 
-		time.Sleep(time.Second * LoopWaitSecond)
-		job = client.GetStatus(args.ProjectID, job.ID)
+		if storage == nil {
+			log.Fatalf("No configuration found for protocol %s", protocol)
+		}
+
+		err = storage.Upload(args.Upload, strings.Join(splitFile[1:len(splitFile)-1], "/"))
+		if err != nil {
+			log.Fatalf("Error while uploading file(s): %s", err)
+		}
 	}
 
-	//print last log
-	client.PrintLog(args.ProjectID, job.ID)
-	log.Printf("Job is %s", job.Status)
-	logs := client.GetLog(args.ProjectID, job.ID, "")
-	if logs.LogsAddress != "" {
-		log.Printf("You can download your logs at %s", logs.LogsAddress)
+	wg := &sync.WaitGroup{}
+	client := &Client{
+		OVH: ovhClient,
 	}
+
+	job, err := client.Submit(args.ProjectID, jobSubmitValue)
+	if err != nil {
+		log.Fatalf("Unable to submit job: %s", err)
+	}
+
+	client.JobID = job.ID
+	wg.Add(1)
+	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
+
+	go func() {
+		defer wg.Done()
+		Loop(client, job)
+	}()
+
+	wg.Wait()
+
 }
 
-// SetupCloseHandler creates a 'listener' on a new goroutine which will notify the
-// program if it receives an interrupt from the OS. We then handle this by calling
-// our clean up procedure and exiting the program.
-func SetupCloseHandler(client *Client) {
-	c := make(chan os.Signal)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-c
-		client.Kill(args.ProjectID, client.JobID)
-		log.Printf("Job is killed")
-		os.Exit(0)
-	}()
+//initConf init configuration.ini file
+func InitConf(confPath string) (map[string]*ini.Section, error) {
+	cfg, err := ini.Load(confPath)
+	if err != nil {
+		return nil, err
+	}
+	conf := make(map[string]*ini.Section)
+	for _, sectionName := range cfg.SectionStrings() {
+		conf[sectionName], _ = cfg.GetSection(sectionName)
+	}
+
+	return conf, nil
 }
 
 //ParsArgs Parse args and return a JobSubmit
@@ -224,68 +257,88 @@ func ParsArgs() *JobSubmit {
 	return jobSubmit
 }
 
-// GetStatus get status of the job from the API
-func (c *Client) GetStatus(projectID string, jobID string) *JobStatus {
+//poll Status
+func Loop(c *Client, job *JobStatus) {
+	sigs := make(chan os.Signal, 2)
+	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
+	var err error
+statusLoop:
+	for {
+		select {
+		case <-sigs:
+			var s string
+			fmt.Printf("Do you want to kill the Job (y/N): ")
+			_, err := fmt.Scan(&s)
+			if err != nil {
+				log.Printf("Job not killed")
+			}
 
-	job := &JobStatus{}
-	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
-	if err := c.OVH.Get(path, job); err != nil {
-		log.Fatalf("Unable to retrieve status for job: %s", err)
+			s = strings.TrimSpace(s)
+			s = strings.ToLower(s)
+
+			if s == "y" || s == "yes" {
+				if err := c.Kill(args.ProjectID, c.JobID); err != nil {
+					log.Printf("Job not killed: %d", err)
+				}
+				log.Printf("Job killed")
+			} else {
+				log.Printf("Job not killed")
+			}
+			return
+		case <-time.After(LoopWaitSecond * time.Second):
+			job, err = c.GetStatus(args.ProjectID, job.ID)
+			if err != nil {
+				log.Printf("Unable to retrieve status for job: %s", err)
+			}
+			switch job.Status {
+			case JobStatusUNKNOWN, JobStatusSUBMITTED, JobStatusPENDING:
+				log.Printf("Job is %s", job.Status)
+
+			case JobStatusCANCELLING, JobStatusTERMINATED, JobStatusFAILED, JobStatusCOMPLETED:
+				break statusLoop
+
+			case JobStatusRUNNING:
+				if jobLog, err := c.GetLogLast(args.ProjectID, job.ID); err == nil {
+					c.lastPrintLog = PrintLog(jobLog.Logs)
+				} else {
+					log.Printf("Unable fetch job log: %s", err)
+				}
+			default:
+				log.Printf("Status %s not implemeted yet", job.Status)
+			}
+		}
 	}
-	return job
+
+	// print last logs
+	retry := true
+	for retry {
+		if jobLog, err := c.GetLogLast(args.ProjectID, job.ID); err == nil {
+			switch {
+			case jobLog.LogsAddress != "":
+				log.Printf("You can download your logs at %s", jobLog.LogsAddress)
+				retry = false
+
+			case len(jobLog.Logs) > 0:
+				c.lastPrintLog = PrintLog(jobLog.Logs)
+				time.Sleep(LoopWaitSecond * time.Second)
+			default:
+				retry = false
+			}
+		}
+
+	}
+
 }
 
-// GetLog get log of the job from the API
-func (c *Client) GetLog(projectID string, jobID string, from string) *JobLog {
-	jobLog := &JobLog{}
-	path := fmt.Sprintf(DataProcessingLog, url.QueryEscape(projectID), url.QueryEscape(jobID))
-	if from != "" {
-		path = path + "?from=" + from
-	}
-
-	if err := c.OVH.Get(path, jobLog); err != nil {
-		log.Printf("Unable get job log: %s", err)
-	}
-
-	return jobLog
-}
-
-// PrintLog Print log from the API
-func (c *Client) PrintLog(projectID string, jobID string) {
-
-	t := time.Unix(0, int64(c.lastPrintLog)).In(time.UTC)
-	from := t.Format("2006-01-02T15:04:05")
-	jobLog := c.GetLog(projectID, jobID, from+".000")
-
-	for _, jLog := range jobLog.Logs {
+// PrintLog Print Log and return last Print Log id
+func PrintLog(jobLog []*Log) (lastPrintLog uint64) {
+	for _, jLog := range jobLog {
 		//don't print log already printed
-		if c.lastPrintLog >= jLog.ID {
+		if lastPrintLog >= jLog.ID {
 			continue
 		}
 		fmt.Println(jLog.Content)
-		c.lastPrintLog = jLog.ID
+		lastPrintLog = jLog.ID
 	}
-}
-
-// Submit job to the API
-func (c *Client) Submit(projectID string, params *JobSubmit) *JobStatus {
-	log.Printf("Submitting job %s ...", params.Name)
-	job := &JobStatus{}
-
-	path := fmt.Sprintf(DataProcessingSubmit, url.QueryEscape(projectID))
-	if err := c.OVH.Post(path, params, job); err != nil {
-		log.Fatalf("Unable to submit job: %s", err)
-	}
-	c.JobID = job.ID
-	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
-	return job
-}
-
-// Kill job
-func (c *Client) Kill(projectID string, jobID string) {
-
-	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
-	if err := c.OVH.Delete(path, nil); err != nil {
-		log.Fatalf("Unable to kill job: %s", err)
-	}
+	return lastPrintLog
 }

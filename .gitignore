@@ -296,4 +296,4 @@ dmypy.json
 *.metals
 
 ### ovh ###
-ovh.conf
+configuration.ini

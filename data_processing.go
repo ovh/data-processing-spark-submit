@@ -1,5 +1,14 @@
 package main
 
+import (
+	"fmt"
+	"log"
+	"net/url"
+	"time"
+
+	"github.com/ovh/go-ovh/ovh"
+)
+
 const DataProcessingSubmit = "/cloud/project/%s/dataProcessing/jobs"
 const DataProcessingLog = "/cloud/project/%s/dataProcessing/jobs/%s/logs"
 const DataProcessingStatus = "/cloud/project/%s/dataProcessing/jobs/%s"
@@ -78,4 +87,50 @@ type (
 		EngineVersion    string                `json:"engineVersion"`
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 	}
+
+	Client struct {
+		OVH          *ovh.Client
+		lastPrintLog uint64
+		JobID        string
+	}
 )
+
+// GetStatus get status of the job from the API
+func (c *Client) GetStatus(projectID string, jobID string) (*JobStatus, error) {
+
+	job := &JobStatus{}
+	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
+	return job, c.OVH.Get(path, job)
+}
+
+// GetLog get log of the job from the API
+func (c *Client) GetLog(projectID string, jobID string, from string) (*JobLog, error) {
+	jobLog := &JobLog{}
+	path := fmt.Sprintf(DataProcessingLog, url.QueryEscape(projectID), url.QueryEscape(jobID))
+	if from != "" {
+		path = path + "?from=" + from
+	}
+	return jobLog, c.OVH.Get(path, jobLog)
+}
+
+// GetLog get log of the job from the API
+func (c *Client) GetLogLast(projectID string, jobID string) (*JobLog, error) {
+	t := time.Unix(0, int64(c.lastPrintLog)).In(time.UTC)
+	from := t.Format("2006-01-02T15:04:05")
+	return c.GetLog(projectID, jobID, from+".000")
+}
+
+// Submit job to the API
+func (c *Client) Submit(projectID string, params *JobSubmit) (*JobStatus, error) {
+	log.Printf("Submitting job %s ...", params.Name)
+	job := &JobStatus{}
+
+	path := fmt.Sprintf(DataProcessingSubmit, url.QueryEscape(projectID))
+	return job, c.OVH.Post(path, params, job)
+}
+
+// Kill job
+func (c *Client) Kill(projectID string, jobID string) error {
+	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
+	return c.OVH.Delete(path, nil)
+}
