@@ -35,6 +35,9 @@ const ParameterExecutorMemory = "executor_memory"
 const ParameterExecutorMemoryOverhead = "executor_memory_overhead"
 const ParameterExecutorNumber = "executor_num"
 
+const ParameterPackages = "packages"
+const ParameterRepositories = "repositories"
+
 const ParameterArgs = "arguments"
 
 const JobTypeJava = "java"
