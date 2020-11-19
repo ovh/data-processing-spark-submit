@@ -72,6 +72,9 @@ Options:
                           Executor memory in (gigi/mebi)bytes (eg. "10G")
    --executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD
                           Executor memory in (gigi/mebi)bytes (eg. "10G")
+   --packages PACKAGES    Comma-delimited list of Maven coordinates
+   --repositories REPOSITORIES
+                          Comma-delimited list of additional repositories (or resolvers in SBT)
    --help, -h             display this help and exit
                  
 

@@ -39,6 +39,8 @@ var (
 		ExecutorNum            string   `arg:"--num-executors,required"`
 		ExecutorMemory         string   `arg:"--executor-memory,required" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
 		ExecutorMemoryOverhead string   `arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		Packages               string   `arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
+		Repositories           string   `arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
 		File                   string   `arg:"positional,required"`
 		Parameters             []string `arg:"positional"`
 	}
@@ -231,6 +233,20 @@ func ParsArgs() *JobSubmit {
 		jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
 			Name:  ParameterExecutorMemoryOverhead,
 			Value: fmt.Sprintf("%d", utils.DeductMemoryOverhead(args.ExecutorMemory)),
+		})
+	}
+
+	if args.Packages != "" {
+		jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
+			Name:  ParameterPackages,
+			Value: args.Packages,
+		})
+	}
+
+	if args.Repositories != "" {
+		jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
+			Name:  ParameterRepositories,
+			Value: args.Repositories,
 		})
 	}
 
