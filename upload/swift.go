@@ -26,7 +26,7 @@ type (
 	}
 )
 
-//init storage
+// init storage
 func NewSwift(conf *SwiftConf) (*Swift, error) {
 	c := &swift.Connection{
 		UserName: conf.UserName,
@@ -43,7 +43,7 @@ func NewSwift(conf *SwiftConf) (*Swift, error) {
 func (s *Swift) Upload(source, dest string) error {
 
 	if filepath.Ext(source) != "" {
-		//is dir
+		// is dir
 		if err := s.Put(source, dest); err != nil {
 			return err
 		}
@@ -64,7 +64,7 @@ func (s *Swift) Upload(source, dest string) error {
 	return nil
 }
 
-//Upload create/override given file(s)
+// Upload create/override given file(s)
 func (s *Swift) Put(source, dest string) error {
 	err := s.c.Authenticate()
 	if err != nil {
