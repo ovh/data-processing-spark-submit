@@ -11,7 +11,7 @@ In this repository you will find a spark-submit wrapper to run spark job on OVHc
 
 ## Configuration
 
-Create an OVHCloud token by visiting  https://eu.api.ovh.com/createToken/
+Create an OVHcloud token by visiting  https://eu.api.ovh.com/createToken/
 and add right GET/POST/PUT on endpoint /cloud/project/\*/dataProcessing/\*
 
 If you want to use the auto upload you need set storage's parameters too.
