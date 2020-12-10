@@ -29,7 +29,7 @@ var (
 		JobName                string   `arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
 		Region                 string   `arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
 		ProjectID              string   `arg:"env:OS_PROJECT_ID,required" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
-		Version                string   `arg:"env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
+		SparkVersion           string   `arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
 		Upload                 string   `arg:"env:UPLOAD" help:"file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
 		Class                  string   `help:"main-class"`
 		DriverCores            string   `arg:"--driver-cores,required"`
@@ -127,7 +127,7 @@ func main() {
 
 }
 
-//initConf init configuration.ini file
+// initConf init configuration.ini file
 func InitConf(confPath string) (map[string]*ini.Section, error) {
 	cfg, err := ini.Load(confPath)
 	if err != nil {
@@ -141,16 +141,17 @@ func InitConf(confPath string) (map[string]*ini.Section, error) {
 	return conf, nil
 }
 
-//ParsArgs Parse args and return a JobSubmit
+// ParsArgs Parse args and return a JobSubmit
 func ParsArgs() *JobSubmit {
-	//clean args
+	// clean args
 	utils.CleanArgs()
 	p := arg.MustParse(&args)
+
 	jobSubmit := &JobSubmit{
 		Engine:           Engine,
 		Name:             args.JobName,
 		Region:           args.Region,
-		EngineVersion:    args.Version,
+		EngineVersion:    args.SparkVersion,
 		EngineParameters: []*JobEngineParameter{},
 	}
 
@@ -273,7 +274,7 @@ func ParsArgs() *JobSubmit {
 	return jobSubmit
 }
 
-//poll Status
+// poll Status
 func Loop(c *Client, job *JobStatus) {
 	sigs := make(chan os.Signal, 2)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
@@ -349,7 +350,7 @@ statusLoop:
 // PrintLog Print Log and return last Print Log id
 func PrintLog(jobLog []*Log) (lastPrintLog uint64) {
 	for _, jLog := range jobLog {
-		//don't print log already printed
+		// don't print log already printed
 		if lastPrintLog >= jLog.ID {
 			continue
 		}

@@ -47,7 +47,7 @@ func CleanArgs() {
 	os.Args = r
 }
 
-//DetectMimeType detect MimeType of file
+// DetectMimeType detect MimeType of file
 func DetectMimeType(filePath string) string {
 	mime, err := mimetype.DetectFile(filePath)
 	if err != nil {
