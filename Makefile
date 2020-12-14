@@ -44,7 +44,7 @@ format:
 
 .PHONY: lint
 lint:
-	@command -v $(GOPATH)/bin/golangci-lint >/dev/null 2>&1 || { echo >&2 "golangci-lint is required but not available please follow instructions from https://github.com/golangci/golangci-lint"; exit 1; }
+	@command -v ./bin/golangci-lint >/dev/null 2>&1 || { echo >&2 "golangci-lint is required but not available please follow instructions from https://github.com/golangci/golangci-lint"; exit 1; }
 	./bin/golangci-lint run  --config golangci.yml
 
 
