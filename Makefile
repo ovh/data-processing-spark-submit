@@ -29,7 +29,7 @@ init:
 	go get -u github.com/onsi/ginkgo/ginkgo
 	go get -u golang.org/x/tools/cmd/cover
 	go get -u github.com/modocache/gover
-	go get -u github.com/golangci/golangci-lint/cmd/golangci-lint
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.33.0
 	go get golang.org/x/tools/cmd/goimports
 
 .PHONY: cleanmake
@@ -45,7 +45,7 @@ format:
 .PHONY: lint
 lint:
 	@command -v $(GOPATH)/bin/golangci-lint >/dev/null 2>&1 || { echo >&2 "golangci-lint is required but not available please follow instructions from https://github.com/golangci/golangci-lint"; exit 1; }
-	$(GOPATH)/bin/golangci-lint run  --config golangci.yml
+	./bin/golangci-lint run  --config golangci.yml
 
 
 .PHONY: test
