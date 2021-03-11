@@ -41,6 +41,8 @@ var (
 		ExecutorMemoryOverhead string   `arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
 		Packages               string   `arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
 		Repositories           string   `arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
+		PropertiesFile         string   `arg:"--properties-file" help:"Read properties from the given file"`
+		Files                  string   `arg:"--files" help:"Comma separated list of files you want to use"`
 		File                   string   `arg:"positional,required"`
 		Parameters             []string `arg:"positional"`
 	}
@@ -85,11 +87,16 @@ func main() {
 		log.Fatalf("Error while creating OVH Client: %s", err)
 	}
 
-	if args.Upload != "" {
+	var storage upload.StorageI
+	var containerName string
+	var splitFile []string
+
+	if args.Upload != "" || args.PropertiesFile != "" || args.Files != "" {
 		args.File = filepath.Clean(args.File)
-		splitFile := strings.Split(args.File, "/")
+		splitFile = strings.Split(args.File, "/")
 		protocol := strings.TrimSuffix(splitFile[0], ":")
-		storage, err := upload.New(conf[protocol], protocol)
+		containerName = splitFile[1]
+		storage, err = upload.New(conf[protocol], protocol)
 		if err != nil {
 			log.Fatalf("Error while Initialise Upload Storage: %s", err)
 		}
@@ -97,10 +104,36 @@ func main() {
 		if storage == nil {
 			log.Fatalf("No configuration found for protocol %s", protocol)
 		}
+	}
 
+	if args.Upload != "" {
 		err = storage.Upload(args.Upload, strings.Join(splitFile[1:len(splitFile)-1], "/"))
 		if err != nil {
-			log.Fatalf("Error while uploading file(s): %s", err)
+			log.Fatalf("Error while uploading main code file(s): %s", err)
+		}
+	}
+
+	if args.Files != "" {
+		filesList := strings.Split(args.Files, ",")
+		for _, file := range filesList {
+			file = filepath.Clean(file)
+			path := filepath.Dir(file)
+			if path == "." {
+				path = ""
+			} else {
+				path = "/" + path
+			}
+			err = storage.Upload(file, containerName + path)
+			if err != nil {
+				log.Fatalf("Error while uploading file(s): %s", err)
+			}
+		}
+	}
+
+	if args.PropertiesFile != "" {
+		err = storage.Upload(args.PropertiesFile, containerName)
+		if err != nil {
+			log.Fatalf("Error while uploading properties file: %s", err)
 		}
 	}
 
@@ -269,6 +302,13 @@ func ParsArgs() *JobSubmit {
 	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
 		Name:  ParameterArgs,
 		Value: strings.Join(args.Parameters, ", "),
+	})
+
+	propertiesFile := filepath.Clean(args.PropertiesFile)
+	splitFile = strings.Split(propertiesFile, "/")
+	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
+		Name:  ParameterPropertiesFile,
+		Value: splitFile[len(splitFile)-1],
 	})
 
 	return jobSubmit
