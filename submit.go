@@ -30,7 +30,7 @@ var (
 		Region                 string   `arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
 		ProjectID              string   `arg:"env:OS_PROJECT_ID,required" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
 		SparkVersion           string   `arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
-		Upload                 string   `arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload to before running the job (can be set with ENV vars UPLOAD)"`
+		Upload                 string   `arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
 		Class                  string   `help:"main-class"`
 		DriverCores            string   `arg:"--driver-cores,required"`
 		DriverMemory           string   `arg:"--driver-memory,required" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
@@ -86,16 +86,12 @@ func main() {
 		log.Fatalf("Error while creating OVH Client: %s", err)
 	}
 
-	var storage upload.StorageI
-	var containerName string
-	var splitFile []string
-
 	if args.Upload != "" {
 		args.File = filepath.Clean(args.File)
-		splitFile = strings.Split(args.File, "/")
+		splitFile := strings.Split(args.File, "/")
 		protocol := strings.TrimSuffix(splitFile[0], ":")
-		containerName = splitFile[1]
-		storage, err = upload.New(conf[protocol], protocol)
+		containerName := splitFile[1]
+		storage, err := upload.New(conf[protocol], protocol)
 		if err != nil {
 			log.Fatalf("Error while Initialise Upload Storage: %s", err)
 		}
