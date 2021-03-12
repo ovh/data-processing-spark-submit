@@ -60,7 +60,7 @@ Options:
                           Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)
    --spark-version SPARK-VERSION
                           Version of spark (can be set with ENV vars SPARK_VERSION) [default: 2.4.3]
-   --upload UPLOAD        file path/dir to upload before running the job (can be set with ENV vars UPLOAD)
+   --upload UPLOAD        Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)
    --class CLASS          main-class
    --driver-cores DRIVER-CORES
    --driver-memory DRIVER-MEMORY
@@ -76,6 +76,7 @@ Options:
    --packages PACKAGES    Comma-delimited list of Maven coordinates
    --repositories REPOSITORIES
                           Comma-delimited list of additional repositories (or resolvers in SBT)
+   --properties-file      Read properties from the given file
    --help, -h             display this help and exit
                  
 

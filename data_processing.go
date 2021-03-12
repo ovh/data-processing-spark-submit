@@ -40,6 +40,8 @@ const ParameterRepositories = "repositories"
 
 const ParameterArgs = "arguments"
 
+const ParameterPropertiesFile = "properties_file"
+
 const JobTypeJava = "java"
 const JobTypePython = "python"
 
