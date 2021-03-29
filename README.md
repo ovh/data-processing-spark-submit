@@ -47,7 +47,7 @@ make release
 
 ## Run
 ```
-ovh-spark-submit [--jobname JOBNAME] [--region REGION] --projectid PROJECTID [--version VERSION] [--upload UPLOAD] [--class CLASS] --driver-cores DRIVER-CORES --driver-memory DRIVER-MEMORY [--driver-memoryOverhead DRIVER-MEMORYOVERHEAD] --executor-cores EXECUTOR-CORES --num-executors NUM-EXECUTORS --executor-memory EXECUTOR-MEMORY [--executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD] FILE [PARAMETERS [PARAMETERS ...]]
+ovh-spark-submit [--jobname JOBNAME] [--region REGION] --projectid PROJECTID [--spark-version SPARK-VERSION] [--upload UPLOAD] [--class CLASS] --driver-cores DRIVER-CORES --driver-memory DRIVER-MEMORY [--driver-memoryOverhead DRIVER-MEMORYOVERHEAD] --executor-cores EXECUTOR-CORES --num-executors NUM-EXECUTORS --executor-memory EXECUTOR-MEMORY [--executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD] FILE [PARAMETERS [PARAMETERS ...]]
                  
 Positional arguments:
    FILE
@@ -58,8 +58,9 @@ Options:
    --region REGION        Openstack region of the job (can be set with ENV vars OS_REGION) [default: GRA]
    --projectid PROJECTID
                           Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)
-   --version VERSION      Version of spark (can be set with ENV vars SPARK_VERSION) [default: 2.4.3]
-   --upload UPLOAD        file path/dir to upload before running the job (can be set with ENV vars UPLOAD)
+   --spark-version SPARK-VERSION
+                          Version of spark (can be set with ENV vars SPARK_VERSION) [default: 2.4.3]
+   --upload UPLOAD        Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)
    --class CLASS          main-class
    --driver-cores DRIVER-CORES
    --driver-memory DRIVER-MEMORY
@@ -75,6 +76,7 @@ Options:
    --packages PACKAGES    Comma-delimited list of Maven coordinates
    --repositories REPOSITORIES
                           Comma-delimited list of additional repositories (or resolvers in SBT)
+   --properties-file      Read properties from the given file
    --help, -h             display this help and exit
                  
 

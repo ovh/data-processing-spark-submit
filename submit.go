@@ -30,7 +30,7 @@ var (
 		Region                 string   `arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
 		ProjectID              string   `arg:"env:OS_PROJECT_ID,required" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
 		SparkVersion           string   `arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
-		Upload                 string   `arg:"env:UPLOAD" help:"file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
+		Upload                 string   `arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
 		Class                  string   `help:"main-class"`
 		DriverCores            string   `arg:"--driver-cores,required"`
 		DriverMemory           string   `arg:"--driver-memory,required" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
@@ -41,6 +41,7 @@ var (
 		ExecutorMemoryOverhead string   `arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
 		Packages               string   `arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
 		Repositories           string   `arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
+		PropertiesFile         string   `arg:"--properties-file" help:"Read properties from the given file"`
 		File                   string   `arg:"positional,required"`
 		Parameters             []string `arg:"positional"`
 	}
@@ -89,6 +90,7 @@ func main() {
 		args.File = filepath.Clean(args.File)
 		splitFile := strings.Split(args.File, "/")
 		protocol := strings.TrimSuffix(splitFile[0], ":")
+		containerName := splitFile[1]
 		storage, err := upload.New(conf[protocol], protocol)
 		if err != nil {
 			log.Fatalf("Error while Initialise Upload Storage: %s", err)
@@ -97,10 +99,12 @@ func main() {
 		if storage == nil {
 			log.Fatalf("No configuration found for protocol %s", protocol)
 		}
-
-		err = storage.Upload(args.Upload, strings.Join(splitFile[1:len(splitFile)-1], "/"))
-		if err != nil {
-			log.Fatalf("Error while uploading file(s): %s", err)
+		filesList := strings.Split(args.Upload, ",")
+		for _, file := range filesList {
+			err = storage.Upload(file, containerName)
+			if err != nil {
+				log.Fatalf("Error while uploading file(s): %s", err)
+			}
 		}
 	}
 
@@ -269,6 +273,11 @@ func ParsArgs() *JobSubmit {
 	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
 		Name:  ParameterArgs,
 		Value: strings.Join(args.Parameters, ", "),
+	})
+
+	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
+		Name:  ParameterPropertiesFile,
+		Value: args.PropertiesFile,
 	})
 
 	return jobSubmit
