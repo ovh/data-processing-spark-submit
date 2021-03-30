@@ -275,10 +275,12 @@ func ParsArgs() *JobSubmit {
 		Value: strings.Join(args.Parameters, ", "),
 	})
 
-	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
-		Name:  ParameterPropertiesFile,
-		Value: args.PropertiesFile,
-	})
+	if args.PropertiesFile != "" {
+		jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
+			Name:  ParameterPropertiesFile,
+			Value: args.PropertiesFile,
+		})
+	}
 
 	return jobSubmit
 }
