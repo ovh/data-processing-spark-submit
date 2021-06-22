@@ -61,6 +61,7 @@ type (
 		EngineVersion    string                `json:"engineVersion"`
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 		Status           string                `json:"status"`
+		Ttl              string                `json:"ttl"`
 	}
 
 	// JobEngineParameter representation of JobEngineParameter in OVH API
@@ -89,6 +90,7 @@ type (
 		Engine           string                `json:"engine"`
 		Name             string                `json:"name"`
 		Region           string                `json:"region"`
+		Ttl              string                `json:"ttl"`
 		EngineVersion    string                `json:"engineVersion"`
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 	}
