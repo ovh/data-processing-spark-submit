@@ -259,7 +259,7 @@ func ParsArgs() *JobSubmit {
 	}
 
 	if args.Ttl != "" {
-        d, err := duration.Parse(args.Ttl);
+        _, err := duration.Parse(args.Ttl);
         if err != nil {
             p.Fail("Invalid value for --ttl. It must be in RFC3339 (duration) format (i.e. PT30H for 30 hours)")
         }
