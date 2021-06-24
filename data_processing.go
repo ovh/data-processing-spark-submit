@@ -90,7 +90,7 @@ type (
 		Engine           string                `json:"engine"`
 		Name             string                `json:"name"`
 		Region           string                `json:"region"`
-		Ttl              string                `json:"ttl"`
+		Ttl              string                `json:"ttl,omitempty"`
 		EngineVersion    string                `json:"engineVersion"`
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 	}
