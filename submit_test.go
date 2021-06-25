@@ -28,7 +28,7 @@ func TestParsArgsJava(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.Ttl != "" {
+	if job.TTL != "" {
 		t.Fail()
 	}
 
@@ -90,7 +90,7 @@ func TestParsArgsPython(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.Ttl != "" {
+	if job.TTL != "" {
 		t.Fail()
 	}
 
@@ -152,7 +152,7 @@ func TestParsArgs3(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.Ttl != "P1DT30H4S" {
+	if job.TTL != "P1DT30H4S" {
 		t.Fail()
 	}
 
