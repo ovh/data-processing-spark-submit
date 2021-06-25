@@ -28,6 +28,10 @@ func TestParsArgsJava(t *testing.T) {
 		t.Fail()
 	}
 
+	if job.Ttl != "" {
+		t.Fail()
+	}
+
 	if args.ProjectID != "1377b21260f05b410e4652445ac7c95b" {
 		t.Fail()
 	}
@@ -86,6 +90,10 @@ func TestParsArgsPython(t *testing.T) {
 		t.Fail()
 	}
 
+	if job.Ttl != "" {
+		t.Fail()
+	}
+
 	if args.ProjectID != "1377b21260f05b410e4652445ac7c95b" {
 		t.Fail()
 	}
@@ -125,7 +133,7 @@ func TestParsArgsPython(t *testing.T) {
 func TestParsArgs3(t *testing.T) {
 	// These are the args you would pass in on the command line
 	os.Setenv("OS_PROJECT_ID", "1377b21260f05b410e4652445ac7c95b")
-	os.Args = strings.Split("./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --driver-memoryOverhead 385M --executor-cores 1 --executor-memory 1G --executor-memoryOverhead 385M --num-executors 1 s3://odp/test/spark-examples.jar 1000", " ")
+	os.Args = strings.Split("./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --driver-memoryOverhead 385M --executor-cores 1 --executor-memory 1G --executor-memoryOverhead 385M --num-executors 1 --ttl P1DT30H4S s3://odp/test/spark-examples.jar 1000", " ")
 
 	job := ParsArgs()
 
@@ -144,7 +152,7 @@ func TestParsArgs3(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.Ttl != "" {
+	if job.Ttl != "P1DT30H4S" {
 		t.Fail()
 	}
 
