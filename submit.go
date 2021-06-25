@@ -16,8 +16,8 @@ import (
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/alexflint/go-arg"
-	"github.com/peterhellberg/duration"
 	"github.com/ovh/go-ovh/ovh"
+	"github.com/peterhellberg/duration"
 	"gopkg.in/ini.v1"
 )
 
@@ -43,7 +43,7 @@ var (
 		Packages               string   `arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
 		Repositories           string   `arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
 		PropertiesFile         string   `arg:"--properties-file" help:"Read properties from the given file"`
-		Ttl                    string   `arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. "P1DT30H4S") of this job, after which it will be automatically terminated"`
+		TTL                    string   `arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
 		File                   string   `arg:"positional,required"`
 		Parameters             []string `arg:"positional"`
 	}
@@ -159,7 +159,7 @@ func ParsArgs() *JobSubmit {
 		Region:           args.Region,
 		EngineVersion:    args.SparkVersion,
 		EngineParameters: []*JobEngineParameter{},
-		Ttl:              args.Ttl,
+		TTL:              args.TTL,
 	}
 
 	if args.JobName == "" {
@@ -258,12 +258,12 @@ func ParsArgs() *JobSubmit {
 		})
 	}
 
-	if args.Ttl != "" {
-        _, err := duration.Parse(args.Ttl);
-        if err != nil {
-            p.Fail("Invalid value for --ttl. It must be in RFC3339 (duration) format (i.e. PT30H for 30 hours)")
-        }
-    }
+	if args.TTL != "" {
+		_, err := duration.Parse(args.TTL)
+		if err != nil {
+			p.Fail("Invalid value for --ttl. It must be in RFC3339 (duration) format (i.e. PT30H for 30 hours)")
+		}
+	}
 
 	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
 		Name:  ParameterExecutorNumber,
