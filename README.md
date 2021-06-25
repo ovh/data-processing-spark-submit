@@ -77,7 +77,7 @@ Options:
    --repositories REPOSITORIES
                           Comma-delimited list of additional repositories (or resolvers in SBT)
    --properties-file      Read properties from the given file
-   --ttl                  Maximum "Time To Live" (in RFC3339 (duration)) of this job, after which it will be automatically terminated
+   --ttl                  Maximum "Time To Live" (in RFC3339 (duration) eg. "P1DT30H4S") of this job, after which it will be automatically terminated
    --help, -h             display this help and exit
                  
 
