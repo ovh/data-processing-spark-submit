@@ -43,7 +43,7 @@ var (
 		Packages               string   `arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
 		Repositories           string   `arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
 		PropertiesFile         string   `arg:"--properties-file" help:"Read properties from the given file"`
-		Ttl                    string   `arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration)) of this job, after which it will be automatically terminated"`
+		Ttl                    string   `arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. "P1DT30H4S") of this job, after which it will be automatically terminated"`
 		File                   string   `arg:"positional,required"`
 		Parameters             []string `arg:"positional"`
 	}
