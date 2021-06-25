@@ -144,6 +144,10 @@ func TestParsArgs3(t *testing.T) {
 		t.Fail()
 	}
 
+	if job.Ttl != "" {
+		t.Fail()
+	}
+
 	if args.ProjectID != "1377b21260f05b410e4652445ac7c95b" {
 		t.Fail()
 	}
