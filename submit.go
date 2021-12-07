@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -23,6 +24,8 @@ import (
 
 const (
 	LoopWaitSecond = 2
+	OVHConfig      = "ovh"
+	SwiftConfig    = "swift"
 )
 
 var (
@@ -50,7 +53,8 @@ var (
 )
 
 var (
-	configPath = "configuration.ini"
+	configPath         = "configuration.ini"
+	SupportedProtocols = []string{SwiftConfig}
 )
 
 type (
@@ -73,6 +77,11 @@ func main() {
 		log.Fatalf("Unable to load conf: %s", err)
 	}
 
+	protocols, err := validConfig(conf)
+	if err != nil {
+		log.Fatalf("Invalid conf: %s", err)
+	}
+
 	ovhConf := new(OVHConf)
 	if err := conf["ovh"].MapTo(ovhConf); err != nil {
 		log.Fatalf("Unable to parse \"ovh\" conf: %s", err)
@@ -93,20 +102,24 @@ func main() {
 		splitFile := strings.Split(args.File, "/")
 		protocol := strings.TrimSuffix(splitFile[0], ":")
 		containerName := splitFile[1]
-		storage, err := upload.New(conf[protocol], protocol)
-		if err != nil {
-			log.Fatalf("Error while Initialise Upload Storage: %s", err)
-		}
-
-		if storage == nil {
-			log.Fatalf("No configuration found for protocol %s", protocol)
-		}
-		filesList := strings.Split(args.Upload, ",")
-		for _, file := range filesList {
-			err = storage.Upload(file, containerName)
+		if inTheList(protocol, protocols) {
+			storage, err := upload.New(conf[protocol], protocol)
 			if err != nil {
-				log.Fatalf("Error while uploading file(s): %s", err)
+				log.Fatalf("Error while Initialise Upload Storage: %s", err)
 			}
+
+			if storage == nil {
+				log.Fatalf("No configuration found for protocol %s", protocol)
+			}
+			filesList := strings.Split(args.Upload, ",")
+			for _, file := range filesList {
+				err = storage.Upload(file, containerName)
+				if err != nil {
+					log.Fatalf("Error while uploading file(s): %s", err)
+				}
+			}
+		} else {
+			log.Fatalf("Error while Initialise Upload Storage: protocol %s isn't configured in %s or isn't supported", protocol, configPath)
 		}
 	}
 
@@ -117,6 +130,16 @@ func main() {
 
 	job, err := client.Submit(args.ProjectID, jobSubmitValue)
 	if err != nil {
+		if ovherr, ok := err.(*ovh.APIError); ok {
+			if err.Error() == "Error 422: \"Unprocessable Entity\"" {
+				log.Fatalf("Unable to submit job: %s :: %s :: %v. "+
+					"Please check that your requested job complies with the OVHcloud Data Processing capabilities "+
+					"(https://docs.ovh.com/gb/en/data-processing/capabilities/#the-apache-spark-job-in-data-processing-is-limited-to)", err, ovherr.Class, GetErrorDetails(ovherr))
+			} else {
+				log.Fatalf("Unable to submit job: %s :: %s :: %v.", err, ovherr.Class, GetErrorDetails(ovherr))
+			}
+		}
+
 		log.Fatalf("Unable to submit job: %s", err)
 	}
 
@@ -165,6 +188,7 @@ func ParsArgs() *JobSubmit {
 	if args.JobName == "" {
 		jobSubmit.Name = randomdata.SillyName()
 	}
+
 	if strings.EqualFold(filepath.Ext(args.File), ".jar") {
 		if args.Class == "" {
 			p.Fail("You must provide --class when using jar file")
@@ -379,4 +403,32 @@ func PrintLog(jobLog []*Log) (lastPrintLog uint64) {
 		lastPrintLog = jLog.ID
 	}
 	return lastPrintLog
+}
+
+// test if a value is in the given list
+func inTheList(value string, values []string) bool {
+	for _, element := range values {
+		if value == element {
+			return true
+		}
+	}
+	return false
+}
+
+// test if the given configurations are valid and list the protocols configured
+func validConfig(configSections map[string]*ini.Section) ([]string, error) {
+	var confList []string
+	var protocolsList []string
+	for name, _ := range configSections {
+		confList = append(confList, name)
+		if inTheList(name, SupportedProtocols) {
+			protocolsList = append(protocolsList, name)
+		}
+	}
+
+	if !inTheList(OVHConfig, confList) {
+		return protocolsList, errors.New("missing [ovh] configurations in " + configPath)
+	}
+
+	return protocolsList, nil
 }
