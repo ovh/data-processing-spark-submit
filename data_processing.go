@@ -142,6 +142,7 @@ func (c *Client) Kill(projectID string, jobID string) error {
 	return c.OVH.Delete(path, nil)
 }
 
+// GetErrorDetails return the error details as a formatted string
 func GetErrorDetails(err *ovh.APIError) string {
 	if len(err.Details) == 0 {
 		return ""
