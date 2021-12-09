@@ -141,3 +141,20 @@ func (c *Client) Kill(projectID string, jobID string) error {
 	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
 	return c.OVH.Delete(path, nil)
 }
+
+func GetErrorDetails(err *ovh.APIError) string {
+	if len(err.Details) == 0 {
+		return ""
+	}
+	details := "{"
+	fi := true
+	for key, value := range err.Details {
+		if fi {
+			fi = false
+		} else {
+			details += ", "
+		}
+		details = fmt.Sprintf("%s \"%s\": \"%s\"", details, key, value)
+	}
+	return details + " }"
+}
