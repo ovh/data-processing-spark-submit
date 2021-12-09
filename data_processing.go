@@ -148,10 +148,10 @@ func GetErrorDetails(err *ovh.APIError) string {
 		return ""
 	}
 	details := "{"
-	fi := true
+	first := true
 	for key, value := range err.Details {
-		if fi {
-			fi = false
+		if first {
+			first = false
 		} else {
 			details += ", "
 		}
