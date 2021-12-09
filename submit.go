@@ -105,7 +105,7 @@ func main() {
 		if inTheList(protocol, protocols) {
 			storage, err := upload.New(conf[protocol], protocol)
 			if err != nil {
-				log.Fatalf("Error while Initialise Upload Storage: %s", err)
+				log.Fatalf("Error while initializing upload storage configurations: %s", err)
 			}
 
 			if storage == nil {
@@ -119,7 +119,7 @@ func main() {
 				}
 			}
 		} else {
-			log.Fatalf("Error while Initialise Upload Storage: protocol %s isn't configured in %s or isn't supported", protocol, configPath)
+			log.Fatalf("Error while initializing upload storage configurations: protocol %s isn't configured in %s or isn't supported", protocol, configPath)
 		}
 	}
 
