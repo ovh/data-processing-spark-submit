@@ -417,9 +417,9 @@ func inTheList(value string, values []string) bool {
 
 // test if the given configurations are valid and list the protocols configured
 func validConfig(configSections map[string]*ini.Section) ([]string, error) {
-	var confList []string
+	confList := make([]string, 0, len(configSections))
 	var protocolsList []string
-	for name, _ := range configSections {
+	for name := range configSections {
 		confList = append(confList, name)
 		if inTheList(name, SupportedProtocols) {
 			protocolsList = append(protocolsList, name)
