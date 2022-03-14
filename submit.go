@@ -351,6 +351,7 @@ statusLoop:
 			job, err = c.GetStatus(args.ProjectID, job.ID)
 			if err != nil {
 				log.Printf("Unable to retrieve status for job: %s", err)
+				break
 			}
 			switch job.Status {
 			case JobStatusUNKNOWN, JobStatusSUBMITTED, JobStatusPENDING:
