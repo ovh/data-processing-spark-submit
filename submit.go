@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -30,30 +31,31 @@ const (
 
 var (
 	args struct {
-		JobName                string   `arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
-		Region                 string   `arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
-		ProjectID              string   `arg:"env:OS_PROJECT_ID,required" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
-		SparkVersion           string   `arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
-		Upload                 string   `arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
-		Class                  string   `help:"main-class"`
-		DriverCores            string   `arg:"--driver-cores,required"`
-		DriverMemory           string   `arg:"--driver-memory,required" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		DriverMemoryOverhead   string   `arg:"--driver-memoryOverhead" help:"Driver memoryOverhead in (gigi/mebi)bytes (eg. \"10G\")"`
-		ExecutorCores          string   `arg:"--executor-cores,required"`
-		ExecutorNum            string   `arg:"--num-executors,required"`
-		ExecutorMemory         string   `arg:"--executor-memory,required" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		ExecutorMemoryOverhead string   `arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		Packages               string   `arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
-		Repositories           string   `arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
-		PropertiesFile         string   `arg:"--properties-file" help:"Read properties from the given file"`
-		TTL                    string   `arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
-		File                   string   `arg:"positional,required"`
-		Parameters             []string `arg:"positional"`
+		JobName                string `ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
+		Region                 string `ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
+		ProjectID              string `ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
+		SparkVersion           string `ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
+		Upload                 string `ini:"upload" arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
+		Class                  string `ini:"class" help:"main-class"`
+		DriverCores            string `ini:"driver-cores" arg:"--driver-cores"`
+		DriverMemory           string `ini:"driver-memory" arg:"--driver-memory" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		DriverMemoryOverhead   string `ini:"driver-memoryOverhead" arg:"--driver-memoryOverhead" help:"Driver memoryOverhead in (gigi/mebi)bytes (eg. \"10G\")"`
+		ExecutorCores          string `ini:"executor-cores" arg:"--executor-cores"`
+		ExecutorNum            string `ini:"num-executors" arg:"--num-executors"`
+		ExecutorMemory         string `ini:"executor-memory" arg:"--executor-memory" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		ExecutorMemoryOverhead string `ini:"executor-memoryOverhead" arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		Packages               string `ini:"packages" arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
+		Repositories           string `ini:"repositories" arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
+		PropertiesFile         string `ini:"properties-file" arg:"--properties-file" help:"Read properties from the given file"`
+		TTL                    string `ini:"ttl" arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
+		File                   string `ini:"file" arg:"positional"`
+		Parameters             string `ini:"parameters" arg:"positional"`
+		Config                 string `arg:"--conf"`
 	}
 )
 
 var (
-	configPath         = "configuration.ini"
+	defaultConfigPath  = "configuration.ini"
 	SupportedProtocols = []string{SwiftConfig}
 )
 
@@ -70,14 +72,25 @@ type (
 func main() {
 	var err error
 
-	jobSubmitValue := ParsArgs()
+	var configPath string
+	flag.StringVar(&configPath, "conf", defaultConfigPath, "conf")
+	flag.Parse()
 
 	conf, err := InitConf(configPath)
 	if err != nil {
 		log.Fatalf("Unable to load conf: %s", err)
 	}
+	if _, ok := conf["spark"]; ok {
+		err = conf["spark"].MapTo(&args)
 
-	protocols, err := validConfig(conf)
+		if err != nil {
+			log.Fatalf("Unable to load conf: %s", err)
+		}
+	}
+
+	jobSubmitValue := ParsArgs()
+
+	protocols, err := validConfig(conf, configPath)
 	if err != nil {
 		log.Fatalf("Invalid conf: %s", err)
 	}
@@ -187,6 +200,28 @@ func ParsArgs() *JobSubmit {
 
 	if args.JobName == "" {
 		jobSubmit.Name = randomdata.SillyName()
+	}
+
+	if args.ProjectID == "" {
+		p.Fail("--projectid is required")
+	}
+	if args.DriverCores == "" {
+		p.Fail("--driver-cores is required")
+	}
+	if args.DriverMemory == "" {
+		p.Fail("--driver-memory is required")
+	}
+	if args.ExecutorMemory == "" {
+		p.Fail("--executor-memory is required")
+	}
+	if args.ExecutorNum == "" {
+		p.Fail("--num-executors is required")
+	}
+	if args.ExecutorCores == "" {
+		p.Fail("--executor-cores is required")
+	}
+	if args.File == "" {
+		p.Fail("file is required")
 	}
 
 	if strings.EqualFold(filepath.Ext(args.File), ".jar") {
@@ -306,7 +341,7 @@ func ParsArgs() *JobSubmit {
 
 	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
 		Name:  ParameterArgs,
-		Value: strings.Join(args.Parameters, ", "),
+		Value: strings.Join(strings.Split(args.Parameters, " "), ", "),
 	})
 
 	if args.PropertiesFile != "" {
@@ -417,7 +452,7 @@ func inTheList(value string, values []string) bool {
 }
 
 // test if the given configurations are valid and list the protocols configured
-func validConfig(configSections map[string]*ini.Section) ([]string, error) {
+func validConfig(configSections map[string]*ini.Section, configPath string) ([]string, error) {
 	confList := make([]string, 0, len(configSections))
 	var protocolsList []string
 	for name := range configSections {
