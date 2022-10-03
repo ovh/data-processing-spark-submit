@@ -31,26 +31,27 @@ const (
 
 var (
 	args struct {
-		JobName                string `ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
-		Region                 string `ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
-		ProjectID              string `ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
-		SparkVersion           string `ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
-		Upload                 string `ini:"upload" arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
-		Class                  string `ini:"class" help:"main-class"`
-		DriverCores            string `ini:"driver-cores" arg:"--driver-cores"`
-		DriverMemory           string `ini:"driver-memory" arg:"--driver-memory" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		DriverMemoryOverhead   string `ini:"driver-memoryOverhead" arg:"--driver-memoryOverhead" help:"Driver memoryOverhead in (gigi/mebi)bytes (eg. \"10G\")"`
-		ExecutorCores          string `ini:"executor-cores" arg:"--executor-cores"`
-		ExecutorNum            string `ini:"num-executors" arg:"--num-executors"`
-		ExecutorMemory         string `ini:"executor-memory" arg:"--executor-memory" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		ExecutorMemoryOverhead string `ini:"executor-memoryOverhead" arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		Packages               string `ini:"packages" arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
-		Repositories           string `ini:"repositories" arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
-		PropertiesFile         string `ini:"properties-file" arg:"--properties-file" help:"Read properties from the given file"`
-		TTL                    string `ini:"ttl" arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
-		File                   string `ini:"file" arg:"positional"`
-		Parameters             string `ini:"parameters" arg:"positional"`
-		Config                 string `arg:"--conf"`
+		JobName                string   `ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
+		Region                 string   `ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
+		ProjectID              string   `ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
+		SparkVersion           string   `ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
+		Upload                 string   `ini:"upload" arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
+		Class                  string   `ini:"class" help:"main-class"`
+		DriverCores            string   `ini:"driver-cores" arg:"--driver-cores"`
+		DriverMemory           string   `ini:"driver-memory" arg:"--driver-memory" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		DriverMemoryOverhead   string   `ini:"driver-memoryOverhead" arg:"--driver-memoryOverhead" help:"Driver memoryOverhead in (gigi/mebi)bytes (eg. \"10G\")"`
+		ExecutorCores          string   `ini:"executor-cores" arg:"--executor-cores"`
+		ExecutorNum            string   `ini:"num-executors" arg:"--num-executors"`
+		ExecutorMemory         string   `ini:"executor-memory" arg:"--executor-memory" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		ExecutorMemoryOverhead string   `ini:"executor-memoryOverhead" arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		Packages               string   `ini:"packages" arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
+		Repositories           string   `ini:"repositories" arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
+		PropertiesFile         string   `ini:"properties-file" arg:"--properties-file" help:"Read properties from the given file"`
+		TTL                    string   `ini:"ttl" arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
+		ParametersIni          string   `arg:"-" ini:"parameters"`
+		Config                 string   `arg:"--conf"`
+		File                   string   `ini:"file" arg:"positional"`
+		Parameters             []string `arg:"positional"`
 	}
 )
 
@@ -188,6 +189,10 @@ func ParsArgs() *JobSubmit {
 	// clean args
 	utils.CleanArgs()
 	p := arg.MustParse(&args)
+
+	if args.ParametersIni != "" {
+		args.Parameters = strings.Split(args.ParametersIni, ",")
+	}
 
 	jobSubmit := &JobSubmit{
 		Engine:           Engine,
@@ -341,7 +346,7 @@ func ParsArgs() *JobSubmit {
 
 	jobSubmit.EngineParameters = append(jobSubmit.EngineParameters, &JobEngineParameter{
 		Name:  ParameterArgs,
-		Value: strings.Join(strings.Split(args.Parameters, " "), ", "),
+		Value: strings.Join(args.Parameters, ", "),
 	})
 
 	if args.PropertiesFile != "" {
