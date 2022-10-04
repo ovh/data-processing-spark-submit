@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
@@ -18,6 +19,7 @@ import (
 
 	"github.com/Pallinder/go-randomdata"
 	"github.com/alexflint/go-arg"
+	"github.com/hjson/hjson-go/v4"
 	"github.com/ovh/go-ovh/ovh"
 	"github.com/peterhellberg/duration"
 	"gopkg.in/ini.v1"
@@ -31,32 +33,34 @@ const (
 
 var (
 	args struct {
-		JobName                string   `ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
-		Region                 string   `ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
-		ProjectID              string   `ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
-		SparkVersion           string   `ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
-		Upload                 string   `ini:"upload" arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
-		Class                  string   `ini:"class" help:"main-class"`
-		DriverCores            string   `ini:"driver-cores" arg:"--driver-cores"`
-		DriverMemory           string   `ini:"driver-memory" arg:"--driver-memory" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		DriverMemoryOverhead   string   `ini:"driver-memoryOverhead" arg:"--driver-memoryOverhead" help:"Driver memoryOverhead in (gigi/mebi)bytes (eg. \"10G\")"`
-		ExecutorCores          string   `ini:"executor-cores" arg:"--executor-cores"`
-		ExecutorNum            string   `ini:"num-executors" arg:"--num-executors"`
-		ExecutorMemory         string   `ini:"executor-memory" arg:"--executor-memory" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		ExecutorMemoryOverhead string   `ini:"executor-memoryOverhead" arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
-		Packages               string   `ini:"packages" arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
-		Repositories           string   `ini:"repositories" arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
-		PropertiesFile         string   `ini:"properties-file" arg:"--properties-file" help:"Read properties from the given file"`
-		TTL                    string   `ini:"ttl" arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
-		ParametersIni          string   `arg:"-" ini:"parameters"`
+		JobName                string   `json:"jobname" ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
+		Region                 string   `json:"region" ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
+		ProjectID              string   `json:"projectid" ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
+		SparkVersion           string   `json:"spark-version" ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
+		Upload                 string   `json:"upload" ini:"upload" arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
+		Class                  string   `json:"class" ini:"class" help:"main-class"`
+		DriverCores            string   `json:"driver-cores" ini:"driver-cores" arg:"--driver-cores"`
+		DriverMemory           string   `json:"driver-memory" ini:"driver-memory" arg:"--driver-memory" help:"Driver memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		DriverMemoryOverhead   string   `json:"driver-memoryOverhead" ini:"driver-memoryOverhead" arg:"--driver-memoryOverhead" help:"Driver memoryOverhead in (gigi/mebi)bytes (eg. \"10G\")"`
+		ExecutorCores          string   `json:"executor-cores" ini:"executor-cores" arg:"--executor-cores"`
+		ExecutorNum            string   `json:"num-executors" ini:"num-executors" arg:"--num-executors"`
+		ExecutorMemory         string   `json:"executor-memory" ini:"executor-memory" arg:"--executor-memory" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		ExecutorMemoryOverhead string   `json:"executor-memoryOverhead" ini:"executor-memoryOverhead" arg:"--executor-memoryOverhead" help:"Executor memory in (gigi/mebi)bytes (eg. \"10G\")"`
+		Packages               string   `json:"packages" ini:"packages" arg:"--packages" help:"Comma-delimited list of Maven coordinates"`
+		Repositories           string   `json:"repositories" ini:"repositories" arg:"--repositories" help:"Comma-delimited list of additional repositories (or resolvers in SBT)"`
+		PropertiesFile         string   `json:"properties-file" ini:"properties-file" arg:"--properties-file" help:"Read properties from the given file"`
+		TTL                    string   `json:"ttl" ini:"ttl" arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
+		ParametersIni          string   `json:"parameters" arg:"-" ini:"parameters"`
 		Config                 string   `arg:"--conf"`
-		File                   string   `ini:"file" arg:"positional"`
+		JobConfig              string   `arg:"--job-conf"`
+		File                   string   `json:"file" ini:"file" arg:"positional"`
 		Parameters             []string `arg:"positional"`
 	}
 )
 
 var (
 	defaultConfigPath  = "configuration.ini"
+	defaultJobPath     = "job.json"
 	SupportedProtocols = []string{SwiftConfig}
 )
 
@@ -74,7 +78,9 @@ func main() {
 	var err error
 
 	var configPath string
+	var jobPath string
 	flag.StringVar(&configPath, "conf", defaultConfigPath, "conf")
+	flag.StringVar(&jobPath, "job-conf", defaultJobPath, "job config")
 	flag.Parse()
 
 	conf, err := InitConf(configPath)
@@ -86,6 +92,32 @@ func main() {
 
 		if err != nil {
 			log.Fatalf("Unable to load conf: %s", err)
+		}
+	}
+
+	if _, err := os.Stat(jobPath); err == nil {
+		if strings.HasSuffix(jobPath, ".json") {
+			content, err := os.ReadFile(jobPath)
+			if err != nil {
+				log.Fatalf("Unable to load job conf: %s", err)
+			}
+			if err := json.Unmarshal(content, &args); err != nil {
+				log.Fatalf("Unable to load job conf: %s", err)
+			}
+		} else if strings.HasSuffix(jobPath, ".hjson") {
+			content, err := os.ReadFile(jobPath)
+			if err != nil {
+				log.Fatalf("Unable to load job conf: %s", err)
+			}
+			if err := hjson.Unmarshal(content, &args); err != nil {
+				log.Fatalf("Unable to load job conf: %s", err)
+			}
+		} else {
+			log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", jobPath)
+		}
+	} else {
+		if !strings.HasSuffix(jobPath, ".json") && !strings.HasSuffix(jobPath, ".hjson") {
+			log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", jobPath)
 		}
 	}
 
