@@ -157,6 +157,7 @@ func TestGetStatus(t *testing.T) {
 		EngineVersion:    "2.4.3",
 		EngineParameters: engineParameter,
 		Status:           "RUNNING",
+		ReturnCode:       '0',
 	}
 
 	jobStatus, _ := json.Marshal(JobStatusStruct)
@@ -176,6 +177,10 @@ func TestGetStatus(t *testing.T) {
 	}
 
 	if res.Name != JobStatusStruct.Name {
+		t.Fail()
+	}
+
+	if res.ReturnCode != JobStatusStruct.ReturnCode {
 		t.Fail()
 	}
 
@@ -261,6 +266,7 @@ func TestSubmit(t *testing.T) {
 		EngineVersion:    "2.4.3",
 		EngineParameters: engineParameter,
 		Status:           "PENDING",
+		ReturnCode:       '0',
 	}
 
 	jobStatus, _ := json.Marshal(JobStatusStruct)
@@ -289,6 +295,10 @@ func TestSubmit(t *testing.T) {
 	}
 
 	if res.Name != JobStatusStruct.Name {
+		t.Fail()
+	}
+
+	if res.ReturnCode != JobStatusStruct.ReturnCode {
 		t.Fail()
 	}
 

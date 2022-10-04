@@ -351,13 +351,16 @@ statusLoop:
 			job, err = c.GetStatus(args.ProjectID, job.ID)
 			if err != nil {
 				log.Printf("Unable to retrieve status for job: %s", err)
+				log.Printf("Job returnCode is %d", job.ReturnCode)
 				break
 			}
 			switch job.Status {
 			case JobStatusUNKNOWN, JobStatusSUBMITTED, JobStatusPENDING:
 				log.Printf("Job is %s", job.Status)
+				log.Printf("Job returnCode is %d", job.ReturnCode)
 
 			case JobStatusCANCELLING, JobStatusTERMINATED, JobStatusFAILED, JobStatusCOMPLETED:
+				log.Printf("Job returnCode is %d", job.ReturnCode)
 				break statusLoop
 
 			case JobStatusRUNNING:
@@ -365,6 +368,7 @@ statusLoop:
 					c.lastPrintLog = PrintLog(jobLog.Logs)
 				} else {
 					log.Printf("Unable fetch job log: %s", err)
+					log.Printf("Job returnCode is %d", job.ReturnCode)
 				}
 			default:
 				log.Printf("Status %s not implemeted yet", job.Status)
@@ -390,7 +394,7 @@ statusLoop:
 		}
 
 	}
-
+	os.Exit(int(job.ReturnCode))
 }
 
 // PrintLog Print Log and return last Print Log id

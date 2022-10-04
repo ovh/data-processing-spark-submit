@@ -62,6 +62,7 @@ type (
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 		Status           string                `json:"status"`
 		TTL              string                `json:"ttl"`
+		ReturnCode       uint64                `json:"returnCode"`
 	}
 
 	// JobEngineParameter representation of JobEngineParameter in OVH API
@@ -109,6 +110,14 @@ func (c *Client) GetStatus(projectID string, jobID string) (*JobStatus, error) {
 	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
 	return job, c.OVH.Get(path, job)
 }
+
+// // GetStatus get status of the job from the API
+// func (c *Client) GetExitCode(projectID string, jobID string) (*JobStatus, error) {
+
+// 	job := &JobStatus{}
+// 	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
+// 	return job, c.OVH.Get(path, job)
+// }
 
 // GetLog get log of the job from the API
 func (c *Client) GetLog(projectID string, jobID string, from string) (*JobLog, error) {
