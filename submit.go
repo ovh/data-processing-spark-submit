@@ -152,7 +152,7 @@ func main() {
 		job := Loop(client, job)
 		log.Printf("Job status is : %s", job.Status)
 		if job.Status == "COMPLETED" {
-			log.Printf("Job end job loop")
+			log.Printf("Job exit code : %v", job.ReturnCode)
 			os.Exit(int(job.ReturnCode))
 		}
 	}()
