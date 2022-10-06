@@ -62,7 +62,7 @@ type (
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 		Status           string                `json:"status"`
 		TTL              string                `json:"ttl"`
-		ReturnCode       uint64                `json:"returnCode"`
+		ReturnCode       int64                 `json:"returnCode"`
 	}
 
 	// JobEngineParameter representation of JobEngineParameter in OVH API
@@ -81,7 +81,7 @@ type (
 	// Log representation of Log in OVH API
 	Log struct {
 		Content   string `json:"content"`
-		ID        uint64 `json:"id"`
+		ID        int64  `json:"id"`
 		Timestamp string `json:"timestamp"`
 	}
 
@@ -98,7 +98,7 @@ type (
 
 	Client struct {
 		OVH          *ovh.Client
-		lastPrintLog uint64
+		lastPrintLog int64
 		JobID        string
 	}
 )

@@ -399,7 +399,7 @@ statusLoop:
 }
 
 // PrintLog Print Log and return last Print Log id
-func PrintLog(jobLog []*Log) (lastPrintLog uint64) {
+func PrintLog(jobLog []*Log) (lastPrintLog int64) {
 	for _, jLog := range jobLog {
 		// don't print log already printed
 		if lastPrintLog >= jLog.ID {
