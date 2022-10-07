@@ -81,7 +81,7 @@ type (
 	// Log representation of Log in OVH API
 	Log struct {
 		Content   string `json:"content"`
-		ID        int64  `json:"id"`
+		ID        uint64 `json:"id"`
 		Timestamp string `json:"timestamp"`
 	}
 
@@ -98,7 +98,7 @@ type (
 
 	Client struct {
 		OVH          *ovh.Client
-		lastPrintLog int64
+		lastPrintLog uint64
 		JobID        string
 	}
 )
