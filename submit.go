@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -123,7 +122,6 @@ func main() {
 		}
 	}
 
-	wg := &sync.WaitGroup{}
 	client := &Client{
 		OVH: ovhClient,
 	}
@@ -144,21 +142,20 @@ func main() {
 	}
 
 	client.JobID = job.ID
-	wg.Add(1)
 	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
 
+	returnCodeChan := make(chan int)
+	defer close(returnCodeChan)
+
 	go func() {
-		defer wg.Done()
 		job := Loop(client, job)
 		log.Printf("Job status is : %s", job.Status)
 		if job.Status == "COMPLETED" {
 			log.Printf("Job exit code : %v", job.ReturnCode)
-			os.Exit(int(job.ReturnCode))
 		}
+		returnCodeChan <- int(job.ReturnCode)
 	}()
-
-	wg.Wait()
-
+	os.Exit(<-returnCodeChan)
 }
 
 // initConf init configuration.ini file
