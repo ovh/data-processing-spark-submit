@@ -62,6 +62,7 @@ type (
 		EngineParameters []*JobEngineParameter `json:"engineParameters"`
 		Status           string                `json:"status"`
 		TTL              string                `json:"ttl"`
+		ReturnCode       int64                 `json:"returnCode"`
 	}
 
 	// JobEngineParameter representation of JobEngineParameter in OVH API

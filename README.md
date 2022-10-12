@@ -95,3 +95,18 @@ With Auto Upload
 ```
 OS_PROJECT_ID=1377b21260f05b410e4652445ac7c95b  ./ovh-spark-submit --upload ./spark-examples.jar --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 4G --num-executors 1 swift://odp/spark-examples.jar 1000
 ```
+
+### Outputs
+
+Once your job is executed successfully, the CLI prints out jobs information:
+
+- the jobs log location
+- the exitcode is printed out
+- the CLI exit with this code
+
+```txt
+2022-10-07 09:01:09,693 - deploy - INFO - End of job cc5724d1-bdce-4e99-a72f-xxxx with status 0
+2022/10/07 11:01:12 You can download your logs at https://storage.gra.cloud.ovh.net/v1/AUTH_4beb99ff282e4d16b215375xxxx/odp-logs?prefix=cc5724d1-bdce-4e99-a72f-xxxx
+2022/10/07 11:01:12 Job status is : COMPLETED
+2022/10/07 11:01:12 Job exit code : 0
+```

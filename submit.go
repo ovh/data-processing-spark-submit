@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"path/filepath"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -123,7 +122,6 @@ func main() {
 		}
 	}
 
-	wg := &sync.WaitGroup{}
 	client := &Client{
 		OVH: ovhClient,
 	}
@@ -144,16 +142,20 @@ func main() {
 	}
 
 	client.JobID = job.ID
-	wg.Add(1)
 	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
 
+	returnCodeChan := make(chan int)
+	defer close(returnCodeChan)
+
 	go func() {
-		defer wg.Done()
-		Loop(client, job)
+		job := Loop(client, job)
+		log.Printf("Job status is : %s", job.Status)
+		if job.Status == "COMPLETED" {
+			log.Printf("Job exit code : %v", job.ReturnCode)
+		}
+		returnCodeChan <- int(job.ReturnCode)
 	}()
-
-	wg.Wait()
-
+	os.Exit(<-returnCodeChan)
 }
 
 // initConf init configuration.ini file
@@ -320,7 +322,7 @@ func ParsArgs() *JobSubmit {
 }
 
 // poll Status
-func Loop(c *Client, job *JobStatus) {
+func Loop(c *Client, job *JobStatus) *JobStatus {
 	sigs := make(chan os.Signal, 2)
 	signal.Notify(sigs, os.Interrupt, syscall.SIGTERM)
 	var err error
@@ -346,7 +348,7 @@ statusLoop:
 			} else {
 				log.Printf("Job not killed")
 			}
-			return
+			return job
 		case <-time.After(LoopWaitSecond * time.Second):
 			job, err = c.GetStatus(args.ProjectID, job.ID)
 			if err != nil {
@@ -390,7 +392,7 @@ statusLoop:
 		}
 
 	}
-
+	return job
 }
 
 // PrintLog Print Log and return last Print Log id
