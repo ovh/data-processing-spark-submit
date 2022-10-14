@@ -155,7 +155,11 @@ func main() {
 		}
 		returnCodeChan <- int(job.ReturnCode)
 	}()
-	os.Exit(<-returnCodeChan)
+
+	// return the channel to a value, and get the defer close channel
+	returnedExitCode := <-returnCodeChan
+
+	os.Exit(returnedExitCode)
 }
 
 // initConf init configuration.ini file
