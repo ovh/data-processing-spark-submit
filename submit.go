@@ -14,11 +14,11 @@ import (
 	"data-processing-spark-submit/upload"
 	"data-processing-spark-submit/utils"
 
-	"github.com/Pallinder/go-randomdata"
-	"github.com/alexflint/go-arg"
+	randomdata "github.com/Pallinder/go-randomdata"
+	arg "github.com/alexflint/go-arg"
 	"github.com/ovh/go-ovh/ovh"
 	"github.com/peterhellberg/duration"
-	"gopkg.in/ini.v1"
+	ini "gopkg.in/ini.v1"
 )
 
 const (
