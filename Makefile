@@ -18,8 +18,6 @@ ARCHITECTURES=386 amd64
 # Makefile variables
 VPATH 				:= $(BUILD_DIR)
 
-GOLANGCILINT_VERSION ?= 1.48.0
-
 .SECONDEXPANSION:
 .PHONY: all
 all: init format lint test release
