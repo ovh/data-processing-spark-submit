@@ -18,6 +18,7 @@ ARCHITECTURES=386 amd64
 # Makefile variables
 VPATH 				:= $(BUILD_DIR)
 
+GOLANGCILINT_VERSION ?= 1.48.0
 
 .SECONDEXPANSION:
 .PHONY: all
@@ -29,8 +30,10 @@ init:
 	go get -u github.com/onsi/ginkgo/ginkgo
 	go get -u golang.org/x/tools/cmd/cover
 	go get -u github.com/modocache/gover
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.33.0
-	go get golang.org/x/tools/cmd/goimports
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.0
+	go get golang.org/x/tools/internal/imports@v0.1.12
+	go get golang.org/x/tools/internal/gocommand@v0.1.12
+	go install golang.org/x/tools/cmd/goimports
 
 .PHONY: cleanmake
 clean:

@@ -145,7 +145,6 @@ func main() {
 	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
 
 	returnCodeChan := make(chan int)
-	defer close(returnCodeChan)
 
 	go func() {
 		job := Loop(client, job)
@@ -158,7 +157,7 @@ func main() {
 
 	// return the channel to a value, and get the defer close channel
 	returnedExitCode := <-returnCodeChan
-
+	close(returnCodeChan)
 	os.Exit(returnedExitCode)
 }
 
