@@ -25,14 +25,11 @@ all: init format lint test release
 .PHONY: init
 init:
 	curl https://raw.githubusercontent.com/golang/dep/master/install.sh | sh
-	go get github.com/onsi/ginkgo/ginkgo
-	go install golang.org/x/tools/cmd/cover
+	go install github.com/onsi/ginkgo/v2/ginkgo@latest
+	go get golang.org/x/tools/cmd/cover
 	go get github.com/modocache/gover
 	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s v1.50.0
-# go install is only for main package
-	go get -u golang.org/x/tools/internal/imports@v0.1.12
-	go get -u golang.org/x/tools/internal/gocommand@v0.1.12
-	go install golang.org/x/tools/cmd/goimports
+	go install golang.org/x/tools/cmd/goimports@latest
 
 .PHONY: cleanmake
 clean:
@@ -49,18 +46,17 @@ lint:
 	@command -v ./bin/golangci-lint >/dev/null 2>&1 || { echo >&2 "golangci-lint is required but not available please follow instructions from https://github.com/golangci/golangci-lint"; exit 1; }
 	./bin/golangci-lint run  --config golangci.yml
 
-
 .PHONY: test
 test:
-	$(GOPATH)/bin/ginkgo -r --randomizeAllSpecs --randomizeSuites --failOnPending --cover --trace --progress --compilers=2
+	ginkgo -r --randomize-all --randomize-suites --fail-on-pending --cover --trace --progress --compilers=2
 
 .PHONY: testrun
 testrun:
-	$(GOPATH)/bin/ginkgo watch -r ./
+	ginkgo watch -r ./
 
 .PHONY: cover
 cover:
-	$(GOPATH)/bin/gover . coverage.txt
+	gover . coverage.txt
 
 
 .PHONY: dev
