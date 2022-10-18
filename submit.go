@@ -14,11 +14,11 @@ import (
 	"data-processing-spark-submit/upload"
 	"data-processing-spark-submit/utils"
 
-	"github.com/Pallinder/go-randomdata"
-	"github.com/alexflint/go-arg"
+	randomdata "github.com/Pallinder/go-randomdata"
+	arg "github.com/alexflint/go-arg"
 	"github.com/ovh/go-ovh/ovh"
 	"github.com/peterhellberg/duration"
-	"gopkg.in/ini.v1"
+	ini "gopkg.in/ini.v1"
 )
 
 const (
@@ -145,7 +145,6 @@ func main() {
 	log.Printf("Job '%s' submitted with id %s", job.Name, job.ID)
 
 	returnCodeChan := make(chan int)
-	defer close(returnCodeChan)
 
 	go func() {
 		job := Loop(client, job)
@@ -155,7 +154,11 @@ func main() {
 		}
 		returnCodeChan <- int(job.ReturnCode)
 	}()
-	os.Exit(<-returnCodeChan)
+
+	// return the channel to a value, and get the defer close channel
+	returnedExitCode := <-returnCodeChan
+	close(returnCodeChan)
+	os.Exit(returnedExitCode)
 }
 
 // initConf init configuration.ini file
