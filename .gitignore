@@ -300,3 +300,6 @@ configuration.ini
 
 ### build binary ###
 data-processing-spark-submit
+
+### cover ###
+*.coverprofile
