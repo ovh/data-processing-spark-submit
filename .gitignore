@@ -297,3 +297,11 @@ dmypy.json
 
 ### ovh ###
 configuration.ini
+
+### build binary ###
+data-processing-spark-submit
+
+### cover ###
+*.coverprofile
+coverprofile.out
+
