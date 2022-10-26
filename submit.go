@@ -3,7 +3,6 @@ package main
 import (
 	"encoding/json"
 	"errors"
-	"flag"
 	"fmt"
 	"log"
 	"os"
@@ -50,8 +49,8 @@ var (
 		PropertiesFile         string   `json:"properties-file" ini:"properties-file" arg:"--properties-file" help:"Read properties from the given file"`
 		TTL                    string   `json:"ttl" ini:"ttl" arg:"--ttl" help:"Maximum \"Time To Live\" (in RFC3339 (duration) eg. \"P1DT30H4S\") of this job, after which it will be automatically terminated"`
 		ParametersIni          string   `json:"parameters" arg:"-" ini:"parameters"`
-		Config                 string   `arg:"--conf"`
-		JobConfig              string   `arg:"--job-conf"`
+		Config                 *string  `arg:"--conf"`
+		JobConfig              *string  `arg:"--job-conf"`
 		File                   string   `json:"file" ini:"file" arg:"positional"`
 		Parameters             []string `arg:"positional"`
 	}
@@ -76,13 +75,15 @@ type (
 func main() {
 	var err error
 
-	var configPath string
-	var jobPath string
-	flag.StringVar(&configPath, "conf", defaultConfigPath, "conf")
-	flag.StringVar(&jobPath, "job-conf", defaultJobPath, "job config")
-	flag.Parse()
+	// clean args and parse them to see if we need to process files or not
+	utils.CleanArgs()
+	parser := arg.MustParse(&args)
 
-	conf, err := InitConf(configPath)
+	if args.Config == nil {
+		args.Config = &defaultConfigPath
+	}
+
+	conf, err := InitConf(*args.Config)
 	if err != nil {
 		log.Fatalf("Unable to load conf: %s", err)
 	}
@@ -94,35 +95,37 @@ func main() {
 		}
 	}
 
-	if _, err := os.Stat(jobPath); err == nil {
-		if strings.HasSuffix(jobPath, ".json") {
-			content, err := os.ReadFile(jobPath)
-			if err != nil {
-				log.Fatalf("Unable to load job conf: %s", err)
-			}
-			if err := json.Unmarshal(content, &args); err != nil {
-				log.Fatalf("Unable to load job conf: %s", err)
-			}
-		} else if strings.HasSuffix(jobPath, ".hjson") {
-			content, err := os.ReadFile(jobPath)
-			if err != nil {
-				log.Fatalf("Unable to load job conf: %s", err)
-			}
-			if err := hjson.Unmarshal(content, &args); err != nil {
-				log.Fatalf("Unable to load job conf: %s", err)
+	if args.JobConfig != nil {
+		if _, err := os.Stat(*args.JobConfig); err == nil {
+			if strings.HasSuffix(*args.JobConfig, ".json") {
+				content, err := os.ReadFile(*args.JobConfig)
+				if err != nil {
+					log.Fatalf("Unable to load job conf: %s", err)
+				}
+				if err := json.Unmarshal(content, &args); err != nil {
+					log.Fatalf("Unable to load job conf: %s", err)
+				}
+			} else if strings.HasSuffix(*args.JobConfig, ".hjson") {
+				content, err := os.ReadFile(*args.JobConfig)
+				if err != nil {
+					log.Fatalf("Unable to load job conf: %s", err)
+				}
+				if err := hjson.Unmarshal(content, &args); err != nil {
+					log.Fatalf("Unable to load job conf: %s", err)
+				}
+			} else {
+				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", args.JobConfig)
 			}
 		} else {
-			log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", jobPath)
-		}
-	} else {
-		if !strings.HasSuffix(jobPath, ".json") && !strings.HasSuffix(jobPath, ".hjson") {
-			log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", jobPath)
+			if !strings.HasSuffix(*args.JobConfig, ".json") && !strings.HasSuffix(*args.JobConfig, ".hjson") {
+				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", args.JobConfig)
+			}
 		}
 	}
 
-	jobSubmitValue := ParsArgs()
+	jobSubmitValue := ParsArgs(*parser)
 
-	protocols, err := validConfig(conf, configPath)
+	protocols, err := validConfig(conf, *args.Config)
 	if err != nil {
 		log.Fatalf("Invalid conf: %s", err)
 	}
@@ -164,7 +167,7 @@ func main() {
 				}
 			}
 		} else {
-			log.Fatalf("Error while initializing upload storage configurations: protocol %s isn't configured in %s or isn't supported", protocol, configPath)
+			log.Fatalf("Error while initializing upload storage configurations: protocol %s isn't configured in %s or isn't supported", protocol, args.Config)
 		}
 	}
 
@@ -222,11 +225,7 @@ func InitConf(confPath string) (map[string]*ini.Section, error) {
 }
 
 // ParsArgs Parse args and return a JobSubmit
-func ParsArgs() *JobSubmit {
-	// clean args
-	utils.CleanArgs()
-	p := arg.MustParse(&args)
-
+func ParsArgs(p arg.Parser) *JobSubmit {
 	if args.ParametersIni != "" {
 		args.Parameters = strings.Split(args.ParametersIni, ",")
 	}
