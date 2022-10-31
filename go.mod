@@ -8,6 +8,7 @@ require (
 	github.com/dustin/go-humanize v1.0.0
 	github.com/gabriel-vasile/mimetype v1.1.0
 	github.com/hjson/hjson-go/v4 v4.2.0
+	github.com/imdario/mergo v0.3.13
 	github.com/ncw/swift v1.0.52
 	github.com/ovh/go-ovh v1.1.1-0.20211209132054-5bcee91ddcd5
 	github.com/peterhellberg/duration v0.0.0-20191119133758-ec6baeebcd10

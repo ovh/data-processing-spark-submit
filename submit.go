@@ -18,6 +18,7 @@ import (
 	randomdata "github.com/Pallinder/go-randomdata"
 	arg "github.com/alexflint/go-arg"
 	"github.com/hjson/hjson-go/v4"
+	"github.com/imdario/mergo"
 	"github.com/ovh/go-ovh/ovh"
 	"github.com/peterhellberg/duration"
 	ini "gopkg.in/ini.v1"
@@ -30,7 +31,25 @@ const (
 )
 
 var (
-	args struct {
+	args     CLIArgs
+	fileArgs CLIArgs
+)
+
+var (
+	defaultConfigPath  = "configuration.ini"
+	defaultJobPath     = "job.json"
+	SupportedProtocols = []string{SwiftConfig}
+)
+
+type (
+	OVHConf struct {
+		Endpoint          string `ini:"endpoint"`
+		ApplicationKey    string `ini:"application_key"`
+		ApplicationSecret string `ini:"application_secret"`
+		ConsumerKey       string `ini:"consumer_key"`
+	}
+
+	CLIArgs struct {
 		JobName                string   `json:"jobname" ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
 		Region                 string   `json:"region" ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
 		ProjectID              string   `json:"projectid" ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
@@ -53,21 +72,6 @@ var (
 		JobConfig              *string  `arg:"--job-conf"`
 		File                   string   `json:"file" ini:"file" arg:"positional"`
 		Parameters             []string `arg:"positional"`
-	}
-)
-
-var (
-	defaultConfigPath  = "configuration.ini"
-	defaultJobPath     = "job.json"
-	SupportedProtocols = []string{SwiftConfig}
-)
-
-type (
-	OVHConf struct {
-		Endpoint          string `ini:"endpoint"`
-		ApplicationKey    string `ini:"application_key"`
-		ApplicationSecret string `ini:"application_secret"`
-		ConsumerKey       string `ini:"consumer_key"`
 	}
 )
 
@@ -102,7 +106,7 @@ func main() {
 				if err != nil {
 					log.Fatalf("Unable to load job conf: %s", err)
 				}
-				if err := json.Unmarshal(content, &args); err != nil {
+				if err := json.Unmarshal(content, &fileArgs); err != nil {
 					log.Fatalf("Unable to load job conf: %s", err)
 				}
 			} else if strings.HasSuffix(*args.JobConfig, ".hjson") {
@@ -110,15 +114,15 @@ func main() {
 				if err != nil {
 					log.Fatalf("Unable to load job conf: %s", err)
 				}
-				if err := hjson.Unmarshal(content, &args); err != nil {
+				if err := hjson.Unmarshal(content, &fileArgs); err != nil {
 					log.Fatalf("Unable to load job conf: %s", err)
 				}
 			} else {
-				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", args.JobConfig)
+				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
 			}
 		} else {
 			if !strings.HasSuffix(*args.JobConfig, ".json") && !strings.HasSuffix(*args.JobConfig, ".hjson") {
-				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", args.JobConfig)
+				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
 			}
 		}
 	}
@@ -167,7 +171,7 @@ func main() {
 				}
 			}
 		} else {
-			log.Fatalf("Error while initializing upload storage configurations: protocol %s isn't configured in %s or isn't supported", protocol, args.Config)
+			log.Fatalf("Error while initializing upload storage configurations: protocol %s isn't configured in %s or isn't supported", protocol, *args.Config)
 		}
 	}
 
@@ -228,6 +232,12 @@ func InitConf(confPath string) (map[string]*ini.Section, error) {
 func ParsArgs(p arg.Parser) *JobSubmit {
 	if args.ParametersIni != "" {
 		args.Parameters = strings.Split(args.ParametersIni, ",")
+	}
+
+	err := mergo.Merge(&args, fileArgs)
+
+	if err != nil {
+		log.Fatalf("Error while initializing configurations: %s", err)
 	}
 
 	jobSubmit := &JobSubmit{
