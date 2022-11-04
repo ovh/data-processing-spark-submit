@@ -1,18 +1,22 @@
 package main
 
 import (
+	"data-processing-spark-submit/utils"
 	"os"
 	"strings"
 	"testing"
+
+	arg "github.com/alexflint/go-arg"
 )
 
 func TestParsArgsJava(t *testing.T) {
 	// These are the args you would pass in on the command line
 	os.Setenv("OS_PROJECT_ID", "1377b21260f05b410e4652445ac7c95b")
 	os.Args = strings.Split("./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 1G --num-executors 1 s3://odp/test/spark-examples.jar 1000", " ")
+	utils.CleanArgs()
+	parser := arg.MustParse(&args)
 
-	job := ParsArgs()
-
+	job := ParsArgs(*parser)
 	if job.ContainerName != "odp" {
 		t.Fail()
 	}
@@ -72,8 +76,10 @@ func TestParsArgsPython(t *testing.T) {
 	// These are the args you would pass in on the command line
 	os.Setenv("OS_PROJECT_ID", "1377b21260f05b410e4652445ac7c95b")
 	os.Args = strings.Split("./ovh-spark-submit --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 1G --num-executors 1 s3://odp/test/spark-examples.py 1000", " ")
+	utils.CleanArgs()
+	parser := arg.MustParse(&args)
 
-	job := ParsArgs()
+	job := ParsArgs(*parser)
 
 	if job.ContainerName != "odp" {
 		t.Fail()
@@ -134,8 +140,10 @@ func TestParsArgs3(t *testing.T) {
 	// These are the args you would pass in on the command line
 	os.Setenv("OS_PROJECT_ID", "1377b21260f05b410e4652445ac7c95b")
 	os.Args = strings.Split("./ovh-spark-submit --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --driver-memoryOverhead 385M --executor-cores 1 --executor-memory 1G --executor-memoryOverhead 385M --num-executors 1 --ttl P1DT30H4S s3://odp/test/spark-examples.jar 1000", " ")
+	utils.CleanArgs()
+	parser := arg.MustParse(&args)
 
-	job := ParsArgs()
+	job := ParsArgs(*parser)
 
 	if job.ContainerName != "odp" {
 		t.Fail()

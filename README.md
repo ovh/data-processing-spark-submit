@@ -47,7 +47,7 @@ make release
 
 ## Run
 ```
-ovh-spark-submit [--jobname JOBNAME] [--region REGION] --projectid PROJECTID [--spark-version SPARK-VERSION] [--upload UPLOAD] [--class CLASS] --driver-cores DRIVER-CORES --driver-memory DRIVER-MEMORY [--driver-memoryOverhead DRIVER-MEMORYOVERHEAD] --executor-cores EXECUTOR-CORES --num-executors NUM-EXECUTORS --executor-memory EXECUTOR-MEMORY [--executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD] FILE [PARAMETERS [PARAMETERS ...]]
+ovh-spark-submit [--jobname JOBNAME] [--region REGION] [--projectid PROJECTID] [--spark-version SPARK-VERSION] [--upload UPLOAD] [--class CLASS] [--driver-cores DRIVER-CORES] [--driver-memory DRIVER-MEMORY] [--driver-memoryOverhead DRIVER-MEMORYOVERHEAD] [--executor-cores EXECUTOR-CORES] [--num-executors NUM-EXECUTORS] [--executor-memory EXECUTOR-MEMORY] [--executor-memoryOverhead EXECUTOR-MEMORYOVERHEAD] [--packages PACKAGES] [--repositories REPOSITORIES] [--properties-file PROPERTIES-FILE] [--ttl TTL] [--conf CONF] [--job-conf JOB-CONF] FILE [PARAMETERS [PARAMETERS ...]]
                  
 Positional arguments:
    FILE
@@ -78,6 +78,8 @@ Options:
                           Comma-delimited list of additional repositories (or resolvers in SBT)
    --properties-file      Read properties from the given file
    --ttl                  Maximum "Time To Live" (in RFC3339 (duration) eg. "P1DT30H4S") of this job, after which it will be automatically terminated
+   --conf                 Allows you to set the path to your configuration.ini instead of the default one
+   --job-conf             Allows you to use a configuration file for your job definition instead of the CLI options. Supports JSON and HJSON format.
    --help, -h             display this help and exit
                  
 
@@ -95,6 +97,35 @@ With Auto Upload
 ```
 OS_PROJECT_ID=1377b21260f05b410e4652445ac7c95b  ./ovh-spark-submit --upload ./spark-examples.jar --class org.apache.spark.examples.SparkPi --driver-cores 1 --driver-memory 4G --executor-cores 1 --executor-memory 4G --num-executors 1 swift://odp/spark-examples.jar 1000
 ```
+
+With a job configuration file
+Example of job.hjson :
+```
+{
+  "jobname": "myAwesomeJob"
+  "region": GRA
+  "projectid": XXX
+  "spark-version": 3.3.0
+  "class": org.apache.spark.examples.SparkPi
+  "driver-cores": 2
+  "driver-memory": 1G
+  "driver-memoryOverhead": 1G
+  "executor-cores": 2
+  "num-executors": 1
+  "executor-memory": 1G
+  "executor-memoryOverhead": 1G
+  "ttl": PT30H
+  "file": swift://example/spark-examples.jar
+  "parameters": "10000, 15000"
+  "upload": "spark-examples.jar"
+}
+```
+
+Command : 
+```
+./ovh-spark-submit --job-conf job.hjson
+```
+
 
 ### Outputs
 
