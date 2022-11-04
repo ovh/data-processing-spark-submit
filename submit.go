@@ -117,10 +117,8 @@ func main() {
 				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
 			}
 
-		} else {
-			if !strings.HasSuffix(*args.JobConfig, ".json") && !strings.HasSuffix(*args.JobConfig, ".hjson") {
-				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
-			}
+		} else if !strings.HasSuffix(*args.JobConfig, ".json") && !strings.HasSuffix(*args.JobConfig, ".hjson") {
+			log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
 		}
 	}
 
