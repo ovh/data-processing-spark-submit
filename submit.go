@@ -37,7 +37,6 @@ var (
 
 var (
 	defaultConfigPath  = "configuration.ini"
-	defaultJobPath     = "job.json"
 	SupportedProtocols = []string{SwiftConfig}
 )
 
@@ -101,25 +100,23 @@ func main() {
 
 	if args.JobConfig != nil {
 		if _, err := os.Stat(*args.JobConfig); err == nil {
-			if strings.HasSuffix(*args.JobConfig, ".json") {
-				content, err := os.ReadFile(*args.JobConfig)
-				if err != nil {
-					log.Fatalf("Unable to load job conf: %s", err)
-				}
+			content, err := os.ReadFile(*args.JobConfig)
+			if err != nil {
+				log.Fatalf("Unable to load job conf: %s", err)
+			}
+			switch {
+			case strings.HasSuffix(*args.JobConfig, ".json"):
 				if err := json.Unmarshal(content, &fileArgs); err != nil {
 					log.Fatalf("Unable to load job conf: %s", err)
 				}
-			} else if strings.HasSuffix(*args.JobConfig, ".hjson") {
-				content, err := os.ReadFile(*args.JobConfig)
-				if err != nil {
-					log.Fatalf("Unable to load job conf: %s", err)
-				}
+			case strings.HasSuffix(*args.JobConfig, ".hjson"):
 				if err := hjson.Unmarshal(content, &fileArgs); err != nil {
 					log.Fatalf("Unable to load job conf: %s", err)
 				}
-			} else {
+			default:
 				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
 			}
+
 		} else {
 			if !strings.HasSuffix(*args.JobConfig, ".json") && !strings.HasSuffix(*args.JobConfig, ".hjson") {
 				log.Fatalf("Job configuration must be a json or hjson file and is currently: %s", *args.JobConfig)
