@@ -40,10 +40,18 @@ region=openstack_region
 ```
 
 ## Build
+
+Minimal go required version : 1.18
+
 ```
 make init
 make release
 ```
+
+## Engine
+
+You can launch either python or java/scala jobs. Ovh-spark-submit will 
+determine automatically which engine is needed based on class or FILE name (jar/.py)
 
 ## Run
 ```
