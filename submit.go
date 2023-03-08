@@ -52,7 +52,7 @@ type (
 		JobName                string   `json:"jobname" ini:"jobname" arg:"env:JOB_NAME" help:"Job name (can be set with ENV vars JOB_NAME)"`
 		Region                 string   `json:"region" ini:"region" arg:"env:OS_REGION" default:"GRA" help:"Openstack region of the job (can be set with ENV vars OS_REGION)"`
 		ProjectID              string   `json:"projectid" ini:"projectid" arg:"env:OS_PROJECT_ID" help:"Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)"`
-		SparkVersion           string   `json:"spark-version" ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"2.4.3" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
+		SparkVersion           string   `json:"spark-version" ini:"spark-version" arg:"--spark-version,env:SPARK_VERSION" default:"3.3.2" help:"Version of spark (can be set with ENV vars SPARK_VERSION)"`
 		Upload                 string   `json:"upload" ini:"upload" arg:"env:UPLOAD" help:"Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)"`
 		Class                  string   `json:"class" ini:"class" help:"main-class"`
 		DriverCores            string   `json:"driver-cores" ini:"driver-cores" arg:"--driver-cores"`

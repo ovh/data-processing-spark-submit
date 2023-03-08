@@ -154,7 +154,7 @@ func TestGetStatus(t *testing.T) {
 		CreationDate:     "2019-12-03T09:40:13Z",
 		StartDate:        "2019-12-03T09:40:15Z",
 		EndDate:          "",
-		EngineVersion:    "2.4.3",
+		EngineVersion:    "3.3.2",
 		EngineParameters: engineParameter,
 		Status:           "RUNNING",
 		ReturnCode:       '0',
@@ -263,7 +263,7 @@ func TestSubmit(t *testing.T) {
 		CreationDate:     "2019-12-03T09:40:13Z",
 		StartDate:        "2019-12-03T09:40:15Z",
 		EndDate:          "",
-		EngineVersion:    "2.4.3",
+		EngineVersion:    "3.3.2",
 		EngineParameters: engineParameter,
 		Status:           "PENDING",
 		ReturnCode:       '0',
@@ -284,7 +284,7 @@ func TestSubmit(t *testing.T) {
 		Engine:           "spark",
 		Name:             "ovh-odp",
 		Region:           "GRA",
-		EngineVersion:    "2.4.3",
+		EngineVersion:    "3.3.2",
 		EngineParameters: engineParameter,
 	}
 
