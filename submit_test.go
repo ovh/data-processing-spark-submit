@@ -21,7 +21,7 @@ func TestParsArgsJava(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.EngineVersion != "2.4.3" {
+	if job.EngineVersion != "3.3.2" {
 		t.Fail()
 	}
 	if job.Engine != "spark" {
@@ -85,7 +85,7 @@ func TestParsArgsPython(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.EngineVersion != "2.4.3" {
+	if job.EngineVersion != "3.3.2" {
 		t.Fail()
 	}
 	if job.Engine != "spark" {
@@ -149,7 +149,7 @@ func TestParsArgs3(t *testing.T) {
 		t.Fail()
 	}
 
-	if job.EngineVersion != "2.4.3" {
+	if job.EngineVersion != "3.3.2" {
 		t.Fail()
 	}
 	if job.Engine != "spark" {

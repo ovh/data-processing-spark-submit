@@ -19,9 +19,10 @@ require (
 	github.com/alexflint/go-scalar v1.0.0 // indirect
 	github.com/modocache/gover v0.0.0-20171022184752-b58185e213c5 // indirect
 	github.com/stretchr/testify v1.5.1 // indirect
-	golang.org/x/sys v0.1.0 // indirect
+	golang.org/x/sys v0.4.0 // indirect
 	golang.org/x/text v0.4.0 // indirect
-	golang.org/x/tools v0.2.0 // indirect
+	golang.org/x/tools v0.5.1-0.20230111220935-a7f7db3f17fc // indirect
+	golang.org/x/tools/cmd/cover v0.1.0-deprecated // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )

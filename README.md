@@ -67,7 +67,7 @@ Options:
    --projectid PROJECTID
                           Openstack ProjectID (can be set with ENV vars OS_PROJECT_ID)
    --spark-version SPARK-VERSION
-                          Version of spark (can be set with ENV vars SPARK_VERSION) [default: 2.4.3]
+                          Version of spark (can be set with ENV vars SPARK_VERSION) [default: 3.3.2]
    --upload UPLOAD        Comma-delimited list of file path/dir to upload before running the job (can be set with ENV vars UPLOAD)
    --class CLASS          main-class
    --driver-cores DRIVER-CORES
