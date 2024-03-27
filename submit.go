@@ -197,10 +197,13 @@ func main() {
 	go func() {
 		job := Loop(client, job)
 		log.Printf("Job status is : %s", job.Status)
-		if job.Status == "COMPLETED" {
-			log.Printf("Job exit code : %v", job.ReturnCode)
+		log.Printf("Job exit code : %v", job.ReturnCode)
+		codeToReturn := job.ReturnCode
+		if job.Status == JobStatusTERMINATED || job.Status == JobStatusFAILED {
+			codeToReturn = 44
+			log.Printf("Job is finished, but not completely, fixed exit code : %v", codeToReturn)
 		}
-		returnCodeChan <- int(job.ReturnCode)
+		returnCodeChan <- int(codeToReturn)
 	}()
 
 	// return the channel to a value, and get the defer close channel
