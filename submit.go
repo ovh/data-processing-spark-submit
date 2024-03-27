@@ -71,6 +71,7 @@ type (
 		JobConfig              *string  `arg:"--job-conf"`
 		File                   string   `json:"file" ini:"file" arg:"positional"`
 		Parameters             []string `arg:"positional"`
+		NotCompletedExitCode   int64    `arg:"--not-completed-exit-code" help:"Exit code for TERMINATED and FAILED job, default is 0"`
 	}
 )
 
@@ -200,8 +201,8 @@ func main() {
 		log.Printf("Job exit code : %v", job.ReturnCode)
 		codeToReturn := job.ReturnCode
 		if job.Status == JobStatusTERMINATED || job.Status == JobStatusFAILED {
-			codeToReturn = 44
-			log.Printf("Job is finished, but not completely, fixed exit code : %v", codeToReturn)
+			codeToReturn = args.NotCompletedExitCode
+			log.Printf("Job is finished, but not completely, fixed exit code : %v", args.NotCompletedExitCode)
 		}
 		returnCodeChan <- int(codeToReturn)
 	}()
