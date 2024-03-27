@@ -71,6 +71,7 @@ type (
 		JobConfig              *string  `arg:"--job-conf"`
 		File                   string   `json:"file" ini:"file" arg:"positional"`
 		Parameters             []string `arg:"positional"`
+		NotCompletedExitCode   int64    `arg:"--not-completed-exit-code" help:"Exit code for TERMINATED and FAILED job, default is 0"`
 	}
 )
 
@@ -196,11 +197,7 @@ func main() {
 
 	go func() {
 		job := Loop(client, job)
-		log.Printf("Job status is : %s", job.Status)
-		if job.Status == "COMPLETED" {
-			log.Printf("Job exit code : %v", job.ReturnCode)
-		}
-		returnCodeChan <- int(job.ReturnCode)
+		returnCodeChan <- getExitCode(job, args.NotCompletedExitCode)
 	}()
 
 	// return the channel to a value, and get the defer close channel
@@ -485,6 +482,23 @@ func PrintLog(jobLog []*Log) (lastPrintLog uint64) {
 		lastPrintLog = jLog.ID
 	}
 	return lastPrintLog
+}
+
+// Process the exit code depending on the job status
+func getExitCode(job *JobStatus, notCompletedExitCode int64) int {
+	log.Printf("Job status is : %s", job.Status)
+	codeToReturn := job.ReturnCode
+
+	switch job.Status {
+		case JobStatusCOMPLETED:
+			log.Printf("Job exit code : %v", job.ReturnCode)
+		case JobStatusTERMINATED, JobStatusFAILED:
+			log.Printf("Job is finished, but not completely, fixed exit code : %v", notCompletedExitCode)
+			codeToReturn = notCompletedExitCode
+		default:
+			log.Printf("Status %s not implemeted yet", job.Status)
+	}
+	return int(codeToReturn)
 }
 
 // test if a value is in the given list

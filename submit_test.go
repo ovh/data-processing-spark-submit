@@ -1,6 +1,9 @@
 package main
 
 import (
+	"encoding/json"
+	"net/http"
+	"time"
 	"data-processing-spark-submit/utils"
 	"os"
 	"strings"
@@ -232,4 +235,87 @@ func TestPrintLog(t *testing.T) {
 	if PrintLog(log) != 2 {
 		t.Fail()
 	}
+}
+
+func TestGetExitCodeCompletedJob(t *testing.T) {
+	notCompletedExitCode := int64(3)
+
+	JobStatusStruct := &JobStatus{
+		ID:               "dummyId",
+		Name:             "dummyName",
+		Status:           JobStatusCOMPLETED,
+		ReturnCode:       1,
+	}
+
+	jobStatus, _ := json.Marshal(JobStatusStruct)
+	// Init test
+	var InputRequest *http.Request
+	ts, ovh := initMockServer(&InputRequest, 200, string(jobStatus), nil, time.Duration(0))
+	defer ts.Close()
+
+	client := &Client{
+		OVH: ovh,
+	}
+
+	jobSubmit := &JobSubmit{
+		ContainerName:    "ovh-odp",
+		Engine:           "spark",
+		Name:             "ovh-odp",
+		Region:           "GRA",
+		EngineVersion:    "2.4.3",
+	}
+
+	job, _ := client.Submit(ProjectID, jobSubmit)
+
+	returnedExitCode := getExitCode(job, notCompletedExitCode)
+	expectedExitCode := 1
+	if returnedExitCode != expectedExitCode {
+		t.Errorf("Returned exit code (%d) does not match expected exit code (%d)", returnedExitCode, expectedExitCode)
+	}
+	if JobStatusStruct.ReturnCode != 1 {
+		t.Fail()
+	}
+
+}
+
+func TestGetExitCodeTerminatedJob(t *testing.T) {
+	notCompletedExitCode := int64(3)
+
+	JobStatusStruct := &JobStatus{
+		ID:               "dummyId",
+		Name:             "dummyName",
+		Status:           JobStatusTERMINATED,
+		// No ReturnCode given
+	}
+
+	jobStatus, _ := json.Marshal(JobStatusStruct)
+	// Init test
+	var InputRequest *http.Request
+	ts, ovh := initMockServer(&InputRequest, 200, string(jobStatus), nil, time.Duration(0))
+	defer ts.Close()
+
+	client := &Client{
+		OVH: ovh,
+	}
+
+	jobSubmit := &JobSubmit{
+		ContainerName:    "ovh-odp",
+		Engine:           "spark",
+		Name:             "ovh-odp",
+		Region:           "GRA",
+		EngineVersion:    "2.4.3",
+	}
+
+	job, _ := client.Submit(ProjectID, jobSubmit)
+
+	returnedExitCode := getExitCode(job, notCompletedExitCode)
+	expectedExitCode := 3
+
+	if returnedExitCode != expectedExitCode {
+		t.Errorf("Returned exit code (%d) does not match expected exit code (%d)", returnedExitCode, expectedExitCode)
+	}
+	if JobStatusStruct.ReturnCode != 0 {
+		t.Fail()
+	}
+
 }
