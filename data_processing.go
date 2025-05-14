@@ -64,6 +64,8 @@ type (
 		TTL              string                `json:"ttl"`
 		ReturnCode       int64                 `json:"returnCode"`
 	}
+	// Workaround
+	JobStatusArray []*JobStatus
 
 	// JobEngineParameter representation of JobEngineParameter in OVH API
 	JobEngineParameter struct {
@@ -108,7 +110,15 @@ func (c *Client) GetStatus(projectID string, jobID string) (*JobStatus, error) {
 
 	job := &JobStatus{}
 	path := fmt.Sprintf(DataProcessingStatus, url.QueryEscape(projectID), url.QueryEscape(jobID))
-	return job, c.OVH.Get(path, job)
+	err := c.OVH.Get(path, job)
+	if err != nil {
+		// Workaround because the OVH API can return an Array that is not decodable to
+		// JobStatus even though the response status is between 200 and 300 and the
+		// response is not empty.
+		// Prevents json: cannot unmarshal array into Go value of type main.JobStatus error.
+		return job, c.OVH.Get(path, &JobStatusArray{})
+	}
+	return job, err
 }
 
 // GetLog get log of the job from the API
